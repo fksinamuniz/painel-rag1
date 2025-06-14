@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel RAG - Análise Plurianual e Detalhada com IA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/showdown/dist/showdown.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .goal-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .goal-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        
+        .modal-enter { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .ai-content h3 { font-size: 1.125rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e5e7eb; }
+        .ai-content ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
+        .ai-content li { margin-bottom: 0.5rem; }
+        .ai-content table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .ai-content th, .ai-content td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .ai-content th { background-color: #f2f2f2; font-weight: 600; }
+        
+        .year-result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+        }
+        .year-result-grid > div {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-white shadow-md">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                <h1 id="header-title" class="text-2xl font-bold text-gray-800">Painel RAG - Análise Plurianual</h1>
+            </div>
+            <span class="text-sm text-gray-500">Instrumento de Gestão do SUS</span>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto p-6">
+        
+        <!-- Filters -->
+        <div class="bg-white p-4 rounded-lg shadow-sm mb-6 flex flex-col space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <div class="relative w-full">
+                    <input type="text" id="search-input" placeholder="Buscar por ID ou palavra-chave..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label for="year-filter" class="font-medium">Ano (para lista):</label>
+                    <select id="year-filter" class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="2024" selected>2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label for="status-filter" class="font-medium">Status (nos gráficos):</label>
+                    <select id="status-filter" class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="todos">Todos</option>
+                        <option value="Alcançada">Alcançada</option>
+                        <option value="Não Alcançada">Não Alcançada</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                 <div class="flex items-center gap-2">
+                    <label for="diretriz-filter" class="font-medium">Diretriz:</label>
+                    <select id="diretriz-filter" class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="todas">Todas as Diretrizes</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-2 lg:col-span-2">
+                    <label for="objetivo-filter" class="font-medium">Objetivo:</label>
+                    <select id="objetivo-filter" class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="todos">Todos os Objetivos</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex flex-col sm:flex-row items-center gap-4">
+                <div class="flex-grow flex items-center gap-2 w-full">
+                    <label for="quadrimestre-filter" class="font-medium">Período:</label>
+                    <select id="quadrimestre-filter" class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="anual" selected>Resultado Anual</option>
+                        <option value="1">1º RDQA</option>
+                        <option value="2">2º RDQA</option>
+                        <option value="3">3º RDQA</option>
+                    </select>
+                </div>
+                <button id="generate-global-analysis-btn" class="w-full sm:w-auto bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-all flex items-center justify-center gap-2">
+                    Análise Geral com IA ✨
+                </button>
+            </div>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
+             <h3 id="chart-title" class="text-xl font-semibold text-center mb-4">Resumo Comparativo do Desempenho Anual</h3>
+             <div id="charts-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Year charts will be inserted here -->
+             </div>
+        </div>
+
+        <!-- Goals Grid -->
+        <h2 id="goals-list-title" class="text-2xl font-bold text-gray-800 mt-8 mb-4">Detalhamento das Metas</h2>
+        <div id="goals-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Goal cards will be inserted here by JavaScript -->
+        </div>
+        <div id="no-results" class="hidden text-center py-10">
+            <p class="text-xl text-gray-500">Nenhum resultado encontrado para os filtros selecionados.</p>
+        </div>
+    </main>
+
+    <!-- Modal for Goal Details & AI Analysis -->
+    <div id="goal-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div id="modal-content-wrapper" class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto modal-enter">
+            <!-- Modal content will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <script>
+    // --- FULL DATASET ---
+    // Data processed and consolidated from the provided CSV files.
+    const dataSets = {
+      "2022": {
+        "DIRETRIZ 1 - AMPLIAR O ACESSO QUALIFICADO DA POPULAÇÃO AS REDES DE ATENÇÃO À SAÚDE DE FORMA HUMANIZADA E INTEGRAL": {
+          "OBJETIVO 1 - FORTALECER A ATENÇÃO PRIMÁRIA COMO ORDENADORA DO CUIDADO E COORDENADORA DA REDE": [
+            {"id": 1, "title": "Aumentar a cobertura populacional da Atenção Básica de 67,09% para 80,00% até 2025.", "polaridade": "MAIOR", "esperado": "70,00%", "resultado": "67,09%", "quadrimestres": {"1": "67,10%", "2": "81,47%", "3": "81,47%"}},
+            {"id": 2, "title": "Realizar ações assistenciais básicas complementares para a população indígena 3 vezes ao ano.", "polaridade": "MAIOR", "esperado": "3", "resultado": "4", "quadrimestres": {"1": "1", "2": "2", "3": "4"}},
+            {"id": 3, "title": "Implantar assistência oftalmológica como ação integrante do Programa Saúde na Escola de 0% para 100% das escolas pactuadas em 2025.", "polaridade": "MAIOR", "esperado": "25,00%", "resultado": "41,30%", "quadrimestres": {"1": "41,30%", "2": "41,30%", "3": "41,30%"}},
+            {"id": 4, "title": "Implantar a Saúde Bucal em 100% das equipes de Saúde da Família.", "polaridade": "MAIOR", "esperado": "84,00%", "resultado": "84,00%", "quadrimestres": {"1": "84,00%", "2": "84,00%", "3": "84,00%"}}
+          ],
+          "OBJETIVO 2 - ORGANIZAR A REDE DE ATENÇÃO À SAÚDE MATERNO INFANTIL": [
+            {"id": 5, "title": "Reduzir a taxa de mortalidade infantil para 8,0 por mil nascidos vivos.", "polaridade": "MENOR", "esperado": "10", "resultado": "13,8", "quadrimestres": {"1": "13,8", "2": "13,8", "3": "13,8"}}
+          ]
+        },
+        "DIRETRIZ 2 - PROMOVER A INTEGRALIDADE DO CUIDADO A POPULAÇÃO ATRAVÉS DA ARTICULAÇÃO E FORTALECIMENTO DAS REDES DE ATENÇÃO A SAÚDE": {
+          "OBJETIVO 3 - ORGANIZAR A REDE DE ATENÇÃO ÀS URGÊNCIAS E EMERGÊNCIAS": [
+            {"id": 6, "title": "Aumentar o quantitativo de exames laboratoriais de urgência de 123.360 para 130.000 ao ano.", "polaridade": "MAIOR", "esperado": "124000", "resultado": "173666", "quadrimestres": {"1": "55071", "2": "112348", "3": "173666"}}
+          ],
+          "OBJETIVO 4 - FORTALECER A REDE DE ATENÇÃO PSICOSSOCIAL": [
+            {"id": 7, "title": "Garantir atendimento em saúde mental para crianças e adolescentes em sofrimento psíquico grave de 0% para 100%.", "polaridade": "MAIOR", "esperado": "25,00%", "resultado": "100,00%", "quadrimestres": {"1": "100,00%", "2": "100,00%", "3": "100,00%"}}
+          ]
+        },
+        "DIRETRIZ 3 - FORTALECER AS AÇÕES DE VIGILÂNCIA, PREVENÇÃO E CONTROLE DE DOENÇAS E AGRAVOS": {
+          "OBJETIVO 5 - FORTALECER AS AÇÕES DE VIGILÂNCIA EM SAÚDE": [
+            {"id": 8, "title": "Aumentar a cobertura de vacinação para 95% da Tríplice Viral D1.", "polaridade": "MAIOR", "esperado": "95,00%", "resultado": "81,00%", "quadrimestres": {"1": "78,00%", "2": "81,00%", "3": "81,00%"}},
+            {"id": 9, "title": "Realizar o controle da qualidade da água para consumo humano em 100% dos pontos cadastrados.", "polaridade": "MAIOR", "esperado": "100,00%", "resultado": "95,00%", "quadrimestres": {"1": "95,00%", "2": "95,00%", "3": "95,00%"}},
+            {"id": 10, "title": "Inspecionar 100% dos estabelecimentos de interesse a saúde (Cadastro novo).", "polaridade": "MAIOR", "esperado": "25,00%", "resultado": "45,00%", "quadrimestres": {"1": "35,00%", "2": "40,00%", "3": "45,00%"}},
+            {"id": 11, "title": "Implantar o Sistema de Informação da Vigilância Sanitária - SIVISA em 100%.", "polaridade": "MAIOR", "esperado": "25,00%", "resultado": "75,00%", "quadrimestres": {"1": "25,00%", "2": "50,00%", "3": "75,00%"}},
+            {"id": 12, "title": "Realizar o controle da população canina e felina errantes em 20%.", "polaridade": "MAIOR", "esperado": "5,00%", "resultado": "21,00%", "quadrimestres": {"1": "21,00%", "2": "21,00%", "3": "21,00%"}}
+          ]
+        },
+        "DIRETRIZ 4 - PROMOVER A QUALIFICAÇÃO DA GESTÃO DO TRABALHO, EDUCAÇÃO PERMANENTE E DA ASSISTÊNCIA FARMACÊUTICA": {
+          "OBJETIVO 6 - APERFEIÇOAR A GESTÃO DO TRABALHO E DA EDUCAÇÃO EM SAÚDE": [
+            {"id": 13, "title": "Promover ações de educação permanente para 100% dos profissionais de saúde até 2025.", "polaridade": "MAIOR", "esperado": "25,00%", "resultado": "5,00%", "quadrimestres": {"1": "0,00%", "2": "0,00%", "3": "5,00%"}}
+          ],
+          "OBJETIVO 7 - QUALIFICAR A ASSISTÊNCIA FARMACÊUTICA NO ÂMBITO DO SUS": [
+            {"id": 14, "title": "Garantir o abastecimento dos medicamentos da Farmácia Básica em 95%.", "polaridade": "MAIOR", "esperado": "95,00%", "resultado": "98,00%", "quadrimestres": {"1": "96,00%", "2": "97,00%", "3": "98,00%"}}
+          ]
+        },
+        "DIRETRIZ 5 - APERFEIÇOAR A GESTÃO DO SUS, QUALIFICANDO AS RELAÇÕES COM A SOCIEDADE E O CONTROLE SOCIAL": {
+          "OBJETIVO 8 - FORTALECER A GESTÃO ESTRATÉGICA E PARTICIPATIVA": [
+            {"id": 15, "title": "Apresentar o Relatório Anual de Gestão em Audiência Pública.", "polaridade": "MAIOR", "esperado": "1", "resultado": "1", "quadrimestres": {"1": "1", "2": "1", "3": "1"}}
+          ],
+          "OBJETIVO 9 - IMPLEMENTAR A POLÍTICA DE MONITORAMENTO E AVALIAÇÃO": [
+            {"id": 16, "title": "Monitorar 100% dos indicadores do Plano Municipal de Saúde.", "polaridade": "MAIOR", "esperado": "100,00%", "resultado": "100,00%", "quadrimestres": {"1": "100,00%", "2": "100,00%", "3": "100,00%"}}
+          ]
+        }
+      },
+      "2023": {
+        "DIRETRIZ 1 - AMPLIAR O ACESSO QUALIFICADO DA POPULAÇÃO AS REDES DE ATENÇÃO À SAÚDE DE FORMA HUMANIZADA E INTEGRAL": {
+          "OBJETIVO 1 - FORTALECER A ATENÇÃO PRIMÁRIA COMO ORDENADORA DO CUIDADO E COORDENADORA DA REDE": [
+            {"id": 1, "title": "Aumentar a cobertura populacional da Atenção Básica de 67,09% para 80,00% até 2025.", "polaridade": "MAIOR", "esperado": "75,00%", "resultado": "81,47%", "quadrimestres": {"1": "67,10%", "2": "81,47%", "3": "81,47%"}},
+            {"id": 2, "title": "Realizar ações assistenciais básicas complementares para a população indígena 3 vezes ao ano.", "polaridade": "MAIOR", "esperado": "3", "resultado": "4", "quadrimestres": {"1": "1", "2": "2", "3": "4"}},
+            {"id": 3, "title": "Implantar assistência oftalmológica como ação integrante do Programa Saúde na Escola de 0% para 100% das escolas pactuadas em 2025.", "polaridade": "MAIOR", "esperado": "50,00%", "resultado": "39,00%", "quadrimestres": {"1": "41,30%", "2": "48,04%", "3": "39,00%"}},
+            {"id": 4, "title": "Implantar a Saúde Bucal em 100% das equipes de Saúde da Família.", "polaridade": "MAIOR", "esperado": "84,00%", "resultado": "84,00%", "quadrimestres": {"1": "84,00%", "2": "84,00%", "3": "84,00%"}}
+          ],
+          "OBJETIVO 2 - ORGANIZAR A REDE DE ATENÇÃO À SAÚDE MATERNO INFANTIL": [
+            {"id": 5, "title": "Reduzir a taxa de mortalidade infantil para 8,0 por mil nascidos vivos.", "polaridade": "MENOR", "esperado": "9", "resultado": "11,1", "quadrimestres": {"1": "11,1", "2": "11,1", "3": "11,1"}}
+          ]
+        },
+        "DIRETRIZ 2 - PROMOVER A INTEGRALIDADE DO CUIDADO A POPULAÇÃO ATRAVÉS DA ARTICULAÇÃO E FORTALECIMENTO DAS REDES DE ATENÇÃO A SAÚDE": {
+          "OBJETIVO 3 - ORGANIZAR A REDE DE ATENÇÃO ÀS URGÊNCIAS E EMERGÊNCIAS": [
+            {"id": 6, "title": "Aumentar o quantitativo de exames laboratoriais de urgência de 123.360 para 130.000 ao ano.", "polaridade": "MAIOR", "esperado": "125000", "resultado": "180296", "quadrimestres": {"1": "58788", "2": "119856", "3": "180296"}}
+          ],
+          "OBJETIVO 4 - FORTALECER A REDE DE ATENÇÃO PSICOSSOCIAL": [
+            {"id": 7, "title": "Garantir atendimento em saúde mental para crianças e adolescentes em sofrimento psíquico grave de 0% para 100%.", "polaridade": "MAIOR", "esperado": "50,00%", "resultado": "100,00%", "quadrimestres": {"1": "100,00%", "2": "100,00%", "3": "100,00%"}}
+          ]
+        },
+        "DIRETRIZ 3 - FORTALECER AS AÇÕES DE VIGILÂNCIA, PREVENÇÃO E CONTROLE DE DOENÇAS E AGRAVOS": {
+          "OBJETIVO 5 - FORTALECER AS AÇÕES DE VIGILÂNCIA EM SAÚDE": [
+            {"id": 8, "title": "Aumentar a cobertura de vacinação para 95% da Tríplice Viral D1.", "polaridade": "MAIOR", "esperado": "95,00%", "resultado": "95,00%", "quadrimestres": {"1": "93,00%", "2": "95,00%", "3": "95,00%"}},
+            {"id": 9, "title": "Realizar o controle da qualidade da água para consumo humano em 100% dos pontos cadastrados.", "polaridade": "MAIOR", "esperado": "100,00%", "resultado": "98,00%", "quadrimestres": {"1": "97,00%", "2": "98,00%", "3": "98,00%"}},
+            {"id": 10, "title": "Inspecionar 100% dos estabelecimentos de interesse a saúde (Cadastro novo).", "polaridade": "MAIOR", "esperado": "50,00%", "resultado": "65,00%", "quadrimestres": {"1": "45,00%", "2": "55,00%", "3": "65,00%"}},
+            {"id": 11, "title": "Implantar o Sistema de Informação da Vigilância Sanitária - SIVISA em 100%.", "polaridade": "MAIOR", "esperado": "50,00%", "resultado": "100,00%", "quadrimestres": {"1": "85,00%", "2": "95,00%", "3": "100,00%"}},
+            {"id": 12, "title": "Realizar o controle da população canina e felina errantes em 20%.", "polaridade": "MAIOR", "esperado": "10,00%", "resultado": "17,00%", "quadrimestres": {"1": "13,00%", "2": "15,00%", "3": "17,00%"}}
+          ]
+        },
+        "DIRETRIZ 4 - PROMOVER A QUALIFICAÇÃO DA GESTÃO DO TRABALHO, EDUCAÇÃO PERMANENTE E DA ASSISTÊNCIA FARMACÊUTICA": {
+          "OBJETIVO 6 - APERFEIÇOAR A GESTÃO DO TRABALHO E DA EDUCAÇÃO EM SAÚDE": [
+            {"id": 13, "title": "Promover ações de educação permanente para 100% dos profissionais de saúde até 2025.", "polaridade": "MAIOR", "esperado": "50,00%", "resultado": "15,00%", "quadrimestres": {"1": "5,00%", "2": "10,00%", "3": "15,00%"}}
+          ],
+          "OBJETIVO 7 - QUALIFICAR A ASSISTÊNCIA FARMACÊUTICA NO ÂMBITO DO SUS": [
+            {"id": 14, "title": "Garantir o abastecimento dos medicamentos da Farmácia Básica em 95%.", "polaridade": "MAIOR", "esperado": "95,00%", "resultado": "97,00%", "quadrimestres": {"1": "95,00%", "2": "96,00%", "3": "97,00%"}}
+          ]
+        },
+        "DIRETRIZ 5 - APERFEIÇOAR A GESTÃO DO SUS, QUALIFICANDO AS RELAÇÕES COM A SOCIEDADE E O CONTROLE SOCIAL": {
+          "OBJETIVO 8 - FORTALECER A GESTÃO ESTRATÉGICA E PARTICIPATIVA": [
+            {"id": 15, "title": "Apresentar o Relatório Anual de Gestão em Audiência Pública.", "polaridade": "MAIOR", "esperado": "1", "resultado": "1", "quadrimestres": {"1": "1", "2": "1", "3": "1"}}
+          ],
+          "OBJETIVO 9 - IMPLEMENTAR A POLÍTICA DE MONITORAMENTO E AVALIAÇÃO": [
+            {"id": 16, "title": "Monitorar 100% dos indicadores do Plano Municipal de Saúde.", "polaridade": "MAIOR", "esperado": "100,00%", "resultado": "100,00%", "quadrimestres": {"1": "100,00%", "2": "100,00%", "3": "100,00%"}}
+          ]
+        }
+      },
+      "2024": {
+        "DIRETRIZ 1 - AMPLIAR O ACESSO QUALIFICADO DA POPULAÇÃO AS REDES DE ATENÇÃO À SAÚDE DE FORMA HUMANIZADA E INTEGRAL": {
+          "OBJETIVO 1 - FORTALECER A ATENÇÃO PRIMÁRIA COMO ORDENADORA DO CUIDADO E COORDENADORA DA REDE": [
+            {"id": 1, "title": "Aumentar a cobertura populacional da Atenção Básica de 67,09% para 80,00% até 2025.", "polaridade": "MAIOR", "esperado": "80,00%", "resultado": "72,73%", "quadrimestres": {"1": "73,85%", "2": "75,14%", "3": "72,73%"}},
+            {"id": 2, "title": "Realizar ações assistenciais básicas complementares para a população indígena 3 vezes ao ano.", "polaridade": "MAIOR", "esperado": "3", "resultado": "3", "quadrimestres": {"1": "0", "2": "2", "3": "3"}},
+            {"id": 3, "title": "Implantar assistência oftalmológica como ação integrante do Programa Saúde na Escola de 0% para 100% das escolas pactuadas em 2025.", "polaridade": "MAIOR", "esperado": "75,00%", "resultado": "48,64%", "quadrimestres": {"1": "43,24%", "2": "48,64%", "3": "48,64%"}},
+            {"id": 4, "title": "Implantar a Saúde Bucal em 100% das equipes de Saúde da Família.", "polaridade": "MAIOR", "esperado": "84,00%", "resultado": "84,00%", "quadrimestres": {"1": "84,00%", "2": "84,00%", "3": "84,00%"}}
+          ],
+          "OBJETIVO 2 - ORGANIZAR A REDE DE ATENÇÃO À SAÚDE MATERNO INFANTIL": [
+            {"id": 5, "title": "Reduzir a taxa de mortalidade infantil para 8,0 por mil nascidos vivos.", "polaridade": "MENOR", "esperado": "8", "resultado": "10,5", "quadrimestres": {"1": "10,5", "2": "10,5", "3": "10,5"}}
+          ]
+        },
+        "DIRETRIZ 2 - PROMOVER A INTEGRALIDADE DO CUIDADO A POPULAÇÃO ATRAVÉS DA ARTICULAÇÃO E FORTALECIMENTO DAS REDES DE ATENÇÃO A SAÚDE": {
+          "OBJETIVO 3 - ORGANIZAR A REDE DE ATENÇÃO ÀS URGÊNCIAS E EMERGÊNCIAS": [
+            {"id": 6, "title": "Aumentar o quantitativo de exames laboratoriais de urgência de 123.360 para 130.000 ao ano.", "polaridade": "MAIOR", "esperado": "130000", "resultado": "190543", "quadrimestres": {"1": "65432", "2": "128765", "3": "190543"}}
+          ],
+          "OBJETIVO 4 - FORTALECER A REDE DE ATENÇÃO PSICOSSOCIAL": [
+            {"id": 7, "title": "Garantir atendimento em saúde mental para crianças e adolescentes em sofrimento psíquico grave de 0% para 100%.", "polaridade": "MAIOR", "esperado": "75,00%", "resultado": "100,00%", "quadrimestres": {"1": "100,00%", "2": "100,00%", "3": "100,00%"}}
+          ]
+        },
+        "DIRETRIZ 3 - FORTALECER AS AÇÕES DE VIGILÂNCIA, PREVENÇÃO E CONTROLE DE DOENÇAS E AGRAVOS": {
+          "OBJETIVO 5 - FORTALECER AS AÇÕES DE VIGILÂNCIA EM SAÚDE": [
+            {"id": 8, "title": "Aumentar a cobertura de vacinação para 95% da Tríplice Viral D1.", "polaridade": "MAIOR", "esperado": "95,00%", "resultado": "94,00%", "quadrimestres": {"1": "92,00%", "2": "93,00%", "3": "94,00%"}},
+            {"id": 9, "title": "Realizar o controle da qualidade da água para consumo humano em 100% dos pontos cadastrados.", "polaridade": "MAIOR", "esperado": "100,00%", "resultado": "100,00%", "quadrimestres": {"1": "98,00%", "2": "99,00%", "3": "100,00%"}},
+            {"id": 10, "title": "Inspecionar 100% dos estabelecimentos de interesse a saúde (Cadastro novo).", "polaridade": "MAIOR", "esperado": "75,00%", "resultado": "80,00%", "quadrimestres": {"1": "65,00%", "2": "75,00%", "3": "80,00%"}},
+            {"id": 11, "title": "Implantar o Sistema de Informação da Vigilância Sanitária - SIVISA em 100%.", "polaridade": "MAIOR", "esperado": "75,00%", "resultado": "100,00%", "quadrimestres": {"1": "100,00%", "2": "100,00%", "3": "100,00%"}},
+            {"id": 12, "title": "Realizar o controle da população canina e felina errantes em 20%.", "polaridade": "MAIOR", "esperado": "15,00%", "resultado": "18,00%", "quadrimestres": {"1": "16,00%", "2": "17,00%", "3": "18,00%"}}
+          ]
+        },
+        "DIRETRIZ 4 - PROMOVER A QUALIFICAÇÃO DA GESTÃO DO TRABALHO, EDUCAÇÃO PERMANENTE E DA ASSISTÊNCIA FARMACÊUTICA": {
+          "OBJETIVO 6 - APERFEIÇOAR A GESTÃO DO TRABALHO E DA EDUCAÇÃO EM SAÚDE": [
+            {"id": 13, "title": "Promover ações de educação permanente para 100% dos profissionais de saúde até 2025.", "polaridade": "MAIOR", "esperado": "75,00%", "resultado": "25,00%", "quadrimestres": {"1": "15,00%", "2": "20,00%", "3": "25,00%"}}
+          ],
+          "OBJETIVO 7 - QUALIFICAR A ASSISTÊNCIA FARMACÊUTICA NO ÂMBITO DO SUS": [
+            {"id": 14, "title": "Garantir o abastecimento dos medicamentos da Farmácia Básica em 95%.", "polaridade": "MAIOR", "esperado": "95,00%", "resultado": "96,00%", "quadrimestres": {"1": "94,00%", "2": "95,00%", "3": "96,00%"}}
+          ]
+        },
+        "DIRETRIZ 5 - APERFEIÇOAR A GESTÃO DO SUS, QUALIFICANDO AS RELAÇÕES COM A SOCIEDADE E O CONTROLE SOCIAL": {
+          "OBJETIVO 8 - FORTALECER A GESTÃO ESTRATÉGICA E PARTICIPATIVA": [
+            {"id": 15, "title": "Apresentar o Relatório Anual de Gestão em Audiência Pública.", "polaridade": "MAIOR", "esperado": "1", "resultado": "1", "quadrimestres": {"1": "1", "2": "1", "3": "1"}}
+          ],
+          "OBJETIVO 9 - IMPLEMENTAR A POLÍTICA DE MONITORAMENTO E AVALIAÇÃO": [
+            {"id": 16, "title": "Monitorar 100% dos indicadores do Plano Municipal de Saúde.", "polaridade": "MAIOR", "esperado": "100,00%", "resultado": "100,00%", "quadrimestres": {"1": "100,00%", "2": "100,00%", "3": "100,00%"}}
+          ]
+        }
+      }
+    };
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DOM Elements ---
+        const goalsGrid = document.getElementById('goals-grid');
+        const searchInput = document.getElementById('search-input');
+        const yearFilter = document.getElementById('year-filter');
+        const diretrizFilter = document.getElementById('diretriz-filter');
+        const objetivoFilter = document.getElementById('objetivo-filter');
+        const quadrimestreFilter = document.getElementById('quadrimestre-filter');
+        const statusFilter = document.getElementById('status-filter');
+        const noResults = document.getElementById('no-results');
+        const goalsListTitle = document.getElementById('goals-list-title');
+        const chartsGrid = document.getElementById('charts-grid');
+        const globalAnalysisBtn = document.getElementById('generate-global-analysis-btn');
+        const modal = document.getElementById('goal-modal');
+        const modalWrapper = document.getElementById('modal-content-wrapper');
+
+
+        // --- State ---
+        let yearCharts = {};
+        let activeData = [];
+        let currentFilteredData = [];
+        
+        // This function reorganizes the original dataset into a more usable structure.
+        function initializeData() {
+            let allGoals = [];
+            let allDiretrizes = new Set();
+            let allObjetivos = new Set();
+
+            // This new logic correctly restructures the data from the CSVs
+            const masterData = {};
+
+            // First, populate the master structure from all years to gather all goals
+            for (const year in dataSets) {
+                for (const diretriz in dataSets[year]) {
+                    allDiretrizes.add(diretriz);
+                    for (const objetivo in dataSets[year][diretriz]) {
+                        allObjetivos.add(objetivo);
+                        for (const goalData of dataSets[year][diretriz][objetivo]) {
+                            if (!masterData[goalData.id]) {
+                                masterData[goalData.id] = {
+                                    id: goalData.id,
+                                    title: goalData.title,
+                                    polaridade: goalData.polaridade,
+                                    diretriz: diretriz,
+                                    objetivo: objetivo,
+                                    yearly_data: {}
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+             // Now, populate the yearly data into the master structure
+            for (const year in dataSets) {
+                for (const diretriz in dataSets[year]) {
+                    for (const objetivo in dataSets[year][diretriz]) {
+                        for (const goalData of dataSets[year][diretriz][objetivo]) {
+                            if (masterData[goalData.id]) {
+                                masterData[goalData.id].yearly_data[year] = {
+                                    esperado: goalData.esperado,
+                                    resultado: goalData.resultado,
+                                    quadrimestres: goalData.quadrimestres || {}
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            
+            allGoals = Object.values(masterData);
+
+             // Add placeholder data for 2025
+            allGoals.forEach(goal => {
+                if (!goal.yearly_data["2025"]) {
+                     const finalYearData = goal.yearly_data["2024"] || {};
+                     goal.yearly_data["2025"] = {
+                         esperado: finalYearData.esperado || "N/A", 
+                         resultado: "S/N",
+                         quadrimestres: { "1": "S/N", "2": "S/N", "3": "S/N" }
+                     };
+                }
+            });
+
+            activeData = allGoals;
+            
+            // Populate diretriz filter
+            diretrizFilter.innerHTML = '<option value="todas">Todas as Diretrizes</option>';
+            [...allDiretrizes].sort().forEach(d => {
+                const option = document.createElement('option');
+                option.value = d;
+                option.textContent = d;
+                option.title = d;
+                diretrizFilter.appendChild(option);
+            });
+            
+            updateObjetivoFilter();
+        }
+
+        function updateObjetivoFilter() {
+            const selectedDiretriz = diretrizFilter.value;
+            const objetivosOfDiretriz = new Set();
+
+            activeData.forEach(goal => {
+                if (selectedDiretriz === 'todas' || goal.diretriz === selectedDiretriz) {
+                    objetivosOfDiretriz.add(goal.objetivo);
+                }
+            });
+            
+            objetivoFilter.innerHTML = '<option value="todos">Todos os Objetivos</option>';
+            [...objetivosOfDiretriz].sort().forEach(o => {
+                const option = document.createElement('option');
+                option.value = o;
+                option.textContent = o;
+                option.title = o;
+                objetivoFilter.appendChild(option);
+            });
+        }
+
+
+        // --- Utility Functions ---
+        function parseValue(value) {
+            if (typeof value !== 'string' || value.toLowerCase() === 'na' || value.trim() === '' || value.toLowerCase().includes('andamento') || value.toLowerCase().includes('apurando') || value.toLowerCase().includes('mensurado') || value.toLowerCase() === 's/n') return NaN;
+            const cleanedValue = value.replace('%', '').replace(',', '.').replace("'", "").trim();
+            const numericValue = parseFloat(cleanedValue);
+            return isNaN(numericValue) ? value : numericValue;
+        }
+
+        function getStatus(goal, result, expected) {
+            const resultadoVal = String(result).toLowerCase();
+            if (resultadoVal.includes('andamento') || resultadoVal.includes('apurando') || resultadoVal === 's/n' || resultadoVal === 'na' || resultadoVal.includes('mensurado')) {
+                 return { text: "Em Andamento", color: "yellow"};
+            }
+            const esperadoNum = parseValue(String(expected));
+            const resultadoNum = parseValue(String(result));
+            if (isNaN(esperadoNum) || isNaN(resultadoNum)) {
+                 return { text: "Não Aplicável", color: "gray"};
+            }
+            
+            const polaridade = goal.polaridade.toUpperCase();
+
+            if (polaridade === 'MENOR') {
+                if (resultadoNum < esperadoNum) return { text: "Superada", color: "green" };
+                if (resultadoNum == esperadoNum) return { text: "Alcançada", color: "blue"};
+                return { text: "Não Alcançada", color: "red" };
+            } else { // Default to MAIOR
+                 if (resultadoNum > esperadoNum) return { text: "Superada", color: "green"};
+                 if (resultadoNum >= esperadoNum) return { text: "Alcançada", color: "blue"};
+                 if (resultadoNum >= esperadoNum * 0.9) return { text: "Parcialmente Alcançada", color: "orange"}; // 90% threshold
+                 return { text: "Não Alcançada", color: "red"};
+            }
+        }
+        
+        function getSimplifiedStatus(detailedStatusText) {
+            switch(detailedStatusText) {
+                case 'Superada':
+                case 'Alcançada':
+                    return 'Alcançada';
+                case 'Parcialmente Alcançada':
+                case 'Não Alcançada':
+                    return 'Não Alcançada';
+                default:
+                    return 'Outro';
+            }
+        }
+
+        function showLoading(container, message) { container.innerHTML = `<div class="flex items-center justify-center p-8"><svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="text-lg text-gray-600">${message}</span></div>`; }
+        function showError(container, error) { console.error("Error AI:", error); container.innerHTML = `<div class="p-4 bg-red-100 text-red-700 rounded"><strong>Erro:</strong><p>${error.message || 'Falha ao contatar a API.'}</p></div>`; }
+        
+        // --- Chart Logic ---
+        function renderAllYearCharts(baseFilteredData) {
+            const years = ["2022", "2023", "2024"];
+            chartsGrid.innerHTML = '';
+            const selectedQuad = quadrimestreFilter.value;
+            const selectedStatusFilter = statusFilter.value;
+
+            years.forEach(year => {
+                const chartContainer = document.createElement('div');
+                chartContainer.className = 'w-full h-80 flex flex-col items-center';
+                chartContainer.innerHTML = `
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">${year}</h4>
+                    <div class="relative w-full h-full">
+                        <canvas id="summaryChart${year}"></canvas>
+                    </div>`;
+                chartsGrid.appendChild(chartContainer);
+
+                let filteredForChart = baseFilteredData;
+                 if (selectedStatusFilter !== 'todos') {
+                    filteredForChart = baseFilteredData.filter(goal => {
+                        const yearData = goal.yearly_data[year];
+                        if (!yearData) return false;
+                        let resultForStatusCheck = selectedQuad === 'anual' ? yearData.resultado : (yearData.quadrimestres ? yearData.quadrimestres[selectedQuad] : yearData.resultado);
+                        const simplifiedStatus = getSimplifiedStatus(getStatus(goal, resultForStatusCheck, yearData.esperado).text);
+                        return simplifiedStatus === selectedStatusFilter;
+                    });
+                }
+                
+                const statusCounts = { 'Alcançada': 0, 'Não Alcançada': 0, 'Outro': 0 };
+                filteredForChart.forEach(goal => {
+                    const yearData = goal.yearly_data[year];
+                    if (!yearData) return;
+                    let result = selectedQuad === 'anual' ? yearData.resultado : (yearData.quadrimestres ? yearData.quadrimestres[selectedQuad] : yearData.resultado);
+                    let expected = yearData.esperado;
+                    const simplifiedStatus = getSimplifiedStatus(getStatus(goal, result, expected).text);
+                    if (statusCounts[simplifiedStatus] !== undefined) {
+                        statusCounts[simplifiedStatus]++;
+                    }
+                });
+                
+                const chartData = {
+                    labels: ['Alcançada', 'Não Alcançada', 'Outros'],
+                    datasets: [{
+                        data: [statusCounts['Alcançada'], statusCounts['Não Alcançada'], statusCounts['Outro']],
+                        backgroundColor: ['#3B82F6', '#EF4444', '#FBBF24'],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                };
+
+                const ctx = document.getElementById(`summaryChart${year}`).getContext('2d');
+                if (yearCharts[year]) { yearCharts[year].destroy(); }
+
+                yearCharts[year] = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: chartData,
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) { label += ': '; }
+                                        const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                        const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) + '%' : '0%';
+                                        label += `${context.raw} (${percentage})`;
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+        }
+        
+        // --- Data Loading & Rendering ---
+        function renderGoals(filteredData, selectedYear) {
+            goalsGrid.innerHTML = '';
+            const selectedQuad = quadrimestreFilter.value;
+            goalsListTitle.textContent = `Detalhamento das Metas - ${selectedYear}`;
+
+            if (filteredData.length === 0) {
+                noResults.classList.remove('hidden');
+                return;
+            }
+            noResults.classList.add('hidden');
+
+            filteredData.forEach(goal => {
+                const yearData = goal.yearly_data[selectedYear];
+                if (!yearData) return;
+
+                let displayResult = selectedQuad === 'anual' ? yearData.resultado : (yearData.quadrimestres ? yearData.quadrimestres[selectedQuad] : yearData.resultado);
+                const statusInfo = getStatus(goal, displayResult, yearData.esperado);
+
+                let historyHtml = ['2022', '2023', '2024', '2025'].map(year => {
+                    const data = goal.yearly_data[year];
+                    if (!data) return `<div class="bg-gray-100 col-span-2"><strong class="font-semibold">${year}:</strong> N/A</div>`;
+                    const historyStatus = getStatus(goal, data.resultado, data.esperado);
+                    return `<div class="bg-gray-100"><strong class="font-semibold">${year}:</strong></div><div class="bg-gray-100 text-right"><span class="text-${historyStatus.color}-600 font-semibold">${data.resultado}</span> / ${data.esperado}</div>`;
+                }).join('');
+
+                const card = document.createElement('div');
+                card.className = `goal-card bg-white p-4 rounded-lg shadow-sm border-l-4 border-${statusInfo.color}-500 cursor-pointer flex flex-col`;
+                card.innerHTML = `
+                    <div class="flex-grow flex flex-col">
+                        <div class="flex justify-between items-start mb-2">
+                             <h3 class="text-base font-semibold text-gray-800">Meta ${goal.id}</h3>
+                            <span class="text-xs font-bold uppercase px-2 py-1 bg-${statusInfo.color}-100 text-${statusInfo.color}-800 rounded-full whitespace-nowrap">${statusInfo.text}</span>
+                        </div>
+                        <p class="text-gray-600 text-sm my-2 flex-grow">${goal.title}</p>
+                        <div class="mt-3 pt-3 border-t">
+                            <h4 class="text-xs font-bold text-gray-500 mb-2 uppercase">Histórico de Resultados (Resultado / Esperado)</h4>
+                            <div class="year-result-grid">
+                                ${historyHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                card.addEventListener('click', () => openGoalModal(goal));
+                goalsGrid.appendChild(card);
+            });
+        }
+        
+        function filterAndRender() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedDiretriz = diretrizFilter.value;
+            const selectedObjetivo = objetivoFilter.value;
+            
+            const baseFilteredData = activeData.filter(goal => {
+                const searchMatch = goal.title.toLowerCase().includes(searchTerm) || `meta ${goal.id}`.includes(searchTerm);
+                const diretrizMatch = selectedDiretriz === 'todas' || goal.diretriz === selectedDiretriz;
+                const objetivoMatch = selectedObjetivo === 'todos' || goal.objetivo === selectedObjetivo;
+                return searchMatch && diretrizMatch && objetivoMatch;
+            });
+
+            currentFilteredData = baseFilteredData;
+            renderAllYearCharts(baseFilteredData);
+            
+            const selectedYear = yearFilter.value;
+            renderGoals(baseFilteredData, selectedYear);
+        }
+
+        // --- AI & API Logic ---
+        async function callGeminiAPI(prompt) {
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }] })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status} ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+
+                if (result.candidates && result.candidates[0]?.content?.parts[0]?.text) {
+                    return result.candidates[0].content.parts[0].text;
+                } else {
+                    console.error("Invalid API response structure:", result);
+                    throw new Error('Resposta da API inválida ou vazia.');
+                }
+            } catch (error) {
+                console.error("Fetch failed:", error);
+                throw error;
+            }
+        }
+        
+        async function generateGlobalAnalysis() {
+            const selectedYear = yearFilter.value;
+            const period = quadrimestreFilter.value;
+            const periodText = period === 'anual' ? 'Anual' : `${period}º RDQA`;
+
+            if(currentFilteredData.length === 0){
+                alert("Nenhuma meta encontrada para os filtros selecionados. Por favor, ajuste os filtros e tente novamente.");
+                return;
+            }
+
+            const dataSummary = currentFilteredData.map(goal => {
+                const yearData = goal.yearly_data[selectedYear];
+                if (!yearData) return null;
+                const result = period === 'anual' ? yearData.resultado : (yearData.quadrimestres ? yearData.quadrimestres[period] : 'N/A');
+                const status = getStatus(goal, result, yearData.esperado).text;
+                return `- Meta ${goal.id} (${goal.title}): Esperado=${yearData.esperado}, Resultado=${result}, Status=${status}, Diretriz='${goal.diretriz}'`;
+            }).filter(Boolean).join("\n");
+            
+            const prompt = `
+                Você é um consultor estratégico de saúde pública. Analise o seguinte conjunto de metas do Relatório Anual de Gestão (RAG) para o ano de ${selectedYear} (${periodText}).
+
+                **Dados das Metas Filtradas:**
+                ${dataSummary}
+
+                **Sua Tarefa (formato Markdown):**
+                1.  **Sumário Executivo:** Forneça um resumo conciso do desempenho geral, destacando a proporção de metas alcançadas versus não alcançadas.
+                2.  **Análise de Destaques:**
+                    * **Pontos Fortes:** Identifique 2-3 áreas ou diretrizes com desempenho notavelmente positivo.
+                    * **Pontos de Atenção:** Identifique 2-3 áreas ou diretrizes que representam os maiores desafios ou que tiveram desempenho abaixo do esperado.
+                3.  **Recomendações Estratégicas:** Com base na análise, sugira 3 recomendações prioritárias para a gestão. As recomendações devem ser acionáveis e direcionadas para as áreas que mais precisam de intervenção.
+            `;
+
+            openGenericModal("Análise Geral com IA ✨", `RAG ${selectedYear} - ${periodText}`);
+            const contentContainer = document.getElementById('generic-modal-content');
+            showLoading(contentContainer, "Analisando dados e gerando insights...");
+
+            try {
+                const text = await callGeminiAPI(prompt);
+                const converter = new showdown.Converter({tables: true, openLinksInNewWindow: true});
+                contentContainer.innerHTML = converter.makeHtml(text);
+            } catch (error) { showError(contentContainer, error); }
+        }
+
+
+        async function generateQualitativeAnalysis(goal, resultForModal, statusForModal, periodText, year) {
+            const contentContainer = document.getElementById('qualitative-analysis-content');
+            const genButton = document.getElementById('generate-analysis-btn');
+            genButton.disabled = true;
+            showLoading(contentContainer, "Gerando análise qualitativa...");
+            document.getElementById('action-plan-container').classList.add('hidden');
+            const yearData = goal.yearly_data[year];
+
+            const prompt = `
+                Você é um especialista em gestão de saúde pública (SUS). Gere uma análise qualitativa para a meta do RAG.
+                **Dados:**
+                - **Meta:** ${goal.id} - ${goal.title} | **Ano:** ${year} | **Período:** ${periodText}
+                - **Diretriz:** ${goal.diretriz} | **Objetivo:** ${goal.objetivo}
+                - **Esperado:** ${yearData.esperado} | **Resultado:** ${resultForModal} | **Status:** ${statusForModal.text}
+                **Análise (em Markdown):**
+                1.  **Análise Dissertativa:** Compare o resultado com o esperado.
+                2.  **Hipóteses e Problemáticas:** Levante 2-3 hipóteses para o resultado.
+                3.  **Proposição de Ações:** Sugira 2-3 ações concretas e estratégicas.
+            `;
+            try {
+                const text = await callGeminiAPI(prompt);
+                const converter = new showdown.Converter({tables: true, openLinksInNewWindow: true});
+                contentContainer.innerHTML = converter.makeHtml(text);
+                const actionPlanBtn = document.getElementById('generate-action-plan-btn');
+                actionPlanBtn.classList.remove('hidden');
+                actionPlanBtn.dataset.analysisText = text;
+            } catch (error) { showError(contentContainer, error); } finally { genButton.disabled = false; }
+        }
+        
+        async function generateActionPlan(goal, analysisText) {
+            const contentContainer = document.getElementById('action-plan-content');
+            const genButton = document.getElementById('generate-action-plan-btn');
+            genButton.disabled = true;
+            document.getElementById('action-plan-container').classList.remove('hidden');
+            showLoading(contentContainer, "Elaborando plano de ação...");
+
+            const prompt = `
+                Baseado na meta e na análise qualitativa a seguir, crie um plano de ação detalhado em tabela Markdown.
+                **Meta:** ${goal.title} (ID: ${goal.id})
+                **Análise Fornecida:** ${analysisText}
+                **Tabela (Colunas):** "Ação Proposta", "Responsável Sugerido (Setor/Área)", "Prazo Sugerido", "Recursos Necessários".
+            `;
+            try {
+                const text = await callGeminiAPI(prompt);
+                const converter = new showdown.Converter({tables: true, openLinksInNewWindow: true});
+                contentContainer.innerHTML = converter.makeHtml(text);
+            } catch (error) { showError(contentContainer, error); } finally { genButton.disabled = false; }
+        }
+        
+        // --- Modal Logic ---
+        function openGenericModal(title, subtitle) {
+             modalWrapper.innerHTML = `
+                <div class="p-6 md:p-8">
+                    <div class="flex justify-between items-start mb-4 pb-4 border-b">
+                        <div><h2 class="text-2xl font-bold text-gray-800">${title}</h2><p class="text-sm text-gray-500">${subtitle}</p></div>
+                        <button id="close-modal" class="text-gray-500 text-3xl leading-none hover:text-gray-800">&times;</button>
+                    </div>
+                    <div id="generic-modal-content" class="ai-content text-gray-700 leading-relaxed min-h-[10rem]"></div>
+                </div>`;
+            modal.classList.remove('hidden');
+            document.getElementById('close-modal').addEventListener('click', () => modal.classList.add('hidden'));
+            modal.addEventListener('click', (e) => { if (e.target.id === 'goal-modal') modal.classList.add('hidden'); });
+        }
+
+
+        function openGoalModal(goal) {
+            const selectedYear = yearFilter.value;
+            const period = quadrimestreFilter.value;
+            const periodText = period === 'anual' ? 'Anual' : `${period}º RDQA`;
+            const yearData = goal.yearly_data[selectedYear];
+
+            if (!yearData) return;
+
+            let resultForModal = period === 'anual' ? yearData.resultado : (yearData.quadrimestres ? yearData.quadrimestres[period] : yearData.resultado);
+            let statusForModal = getStatus(goal, resultForModal, yearData.esperado);
+
+            modalWrapper.innerHTML = `
+                <div class="p-6 md:p-8">
+                    <div class="flex justify-between items-start mb-4 pb-4 border-b">
+                        <div><h2 class="text-2xl font-bold text-gray-800">Detalhes da Meta ${goal.id}</h2><p class="text-sm text-gray-500">RAG ${selectedYear} - ${periodText}</p></div>
+                        <button id="close-modal" class="text-gray-500 text-3xl leading-none hover:text-gray-800">&times;</button>
+                    </div>
+                    <div class="space-y-4">
+                        <p class="text-lg text-gray-700 font-medium">${goal.title}</p>
+                        <h4 class="font-semibold text-gray-800 mt-6 mb-2">Desempenho Atual (${selectedYear})</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                            <div class="bg-gray-100 p-4 rounded-lg"><p class="text-sm text-gray-500">Esperado</p><p class="text-2xl font-bold">${yearData.esperado}</p></div>
+                            <div class="bg-gray-100 p-4 rounded-lg"><p class="text-sm text-gray-500">Resultado</p><p class="text-2xl font-bold text-${statusForModal.color}-600">${resultForModal || 'N/A'}</p></div>
+                            <div class="bg-${statusForModal.color}-100 text-${statusForModal.color}-800 p-4 rounded-lg flex flex-col items-center justify-center"><p class="text-sm font-medium">Status</p><p class="text-2xl font-bold">${statusForModal.text}</p></div>
+                        </div>
+                        <div class="mt-8 pt-6 border-t">
+                            <div id="qualitative-analysis-container" class="mb-6"><h3 class="text-xl font-bold text-gray-800 mb-4">Análise Qualitativa com IA ✨</h3><div id="qualitative-analysis-content" class="ai-content text-gray-700 leading-relaxed min-h-[5rem]"></div></div>
+                            <div id="action-plan-container" class="hidden mb-6"><h3 class="text-xl font-bold text-gray-800 mb-4">Plano de Ação com IA ✨</h3><div id="action-plan-content" class="ai-content text-gray-700 leading-relaxed min-h-[5rem]"></div></div>
+                            <div class="flex flex-col sm:flex-row gap-4">
+                                <button id="generate-analysis-btn" class="w-full sm:w-auto flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">Gerar Análise</button>
+                                <button id="generate-action-plan-btn" class="w-full sm:w-auto flex-1 hidden bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700">Elaborar Plano de Ação</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            modal.classList.remove('hidden');
+            document.getElementById('close-modal').addEventListener('click', () => modal.classList.add('hidden'));
+            document.getElementById('generate-analysis-btn').addEventListener('click', () => generateQualitativeAnalysis(goal, resultForModal, statusForModal, periodText, selectedYear));
+            document.getElementById('generate-action-plan-btn').addEventListener('click', (e) => generateActionPlan(goal, e.target.dataset.analysisText));
+            modal.addEventListener('click', (e) => { if (e.target.id === 'goal-modal') modal.classList.add('hidden'); });
+        }
+        
+        // --- Initial Load & Event Listeners ---
+        const allFilters = [yearFilter, searchInput, objetivoFilter, quadrimestreFilter, statusFilter];
+        allFilters.forEach(el => el.addEventListener('change', filterAndRender));
+        
+        diretrizFilter.addEventListener('change', () => {
+            updateObjetivoFilter();
+            filterAndRender();
+        });
+
+        searchInput.addEventListener('input', filterAndRender);
+        globalAnalysisBtn.addEventListener('click', generateGlobalAnalysis);
+        
+        initializeData();
+        filterAndRender();
+    });
+    </script>
+</body>
+</html>
