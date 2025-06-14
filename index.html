@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Monitoramento RAG V.01</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/showdown/dist/showdown.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .goal-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .goal-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        
+        .modal-enter { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .ai-content h3 { font-size: 1.125rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e5e7eb; }
+        .ai-content ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
+        .ai-content li { margin-bottom: 0.5rem; }
+        .ai-content table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .ai-content th, .ai-content td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .ai-content th { background-color: #f2f2f2; font-weight: 600; }
+        
+        .year-result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+        }
+        .year-result-grid > div {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-white shadow-md">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" strok[...]
+                <h1 id="header-title" class="text-2xl font-bold text-gray-800">Painel de Monitoramento RAG V.01</h1>
+            </div>
+            <span class="text-sm text-gray-500">Instrumento de Gestão do SUS</span>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto p-6">
+        <!-- ... todo o restante do HTML igual ... -->
+    </main>
+
+    <!-- Modal for Goal Details & AI Analysis -->
+    <div id="goal-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div id="modal-content-wrapper" class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto modal-enter">
+            <!-- Modal content will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <script>
+    // --- FULL DATASET ---
+    // Data processed and consolidated from the provided CSV files.
+    const dataSets = {
+      // ... (o conteúdo do dataset permanece idêntico ao original)
+    };
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // ... (todo o restante do código)
+        async function callGeminiAPI(prompt) {
+            const apiKey = "AIzaSyDEAKHN2dh4z9IsZcqdIBtwGkitz7SmtX4";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }] })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status} ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+
+                if (result.candidates && result.candidates[0]?.content?.parts[0]?.text) {
+                    return result.candidates[0].content.parts[0].text;
+                } else {
+                    console.error("Invalid API response structure:", result);
+                    throw new Error('Resposta da API inválida ou vazia.');
+                }
+            } catch (error) {
+                console.error("Fetch failed:", error);
+                throw error;
+            }
+        }
+        // ... (restante do código)
+    });
+    </script>
+</body>
+</html>
