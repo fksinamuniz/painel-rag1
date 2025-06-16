@@ -968,22 +968,20 @@
         filterAndRender();
     });
     </script>
-    <script>
-function exportarMetaPDF(botao) {
-    const card = botao.closest('#modal-content-wrapper');
+  function exportarMetaPDF(botao) {
+        const card = botao.closest('#modal-content-wrapper');
+        html2canvas(card, { scale: 2 }).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const imgProps = pdf.getImageProperties(imgData);
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-    html2canvas(card, { scale: 2 }).then(canvas => {
-        const imgData = canvas.toDataURL('image/png');
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-        pdf.addImage(imgData, 'PNG', 0, 10, pdfWidth, pdfHeight);
-        pdf.save('Meta_RAG.pdf');
-    });
-}
+            pdf.addImage(imgData, 'PNG', 0, 10, pdfWidth, pdfHeight);
+            pdf.save('Meta_RAG.pdf');
+        });
+    }
 </script>
 
 </body>
