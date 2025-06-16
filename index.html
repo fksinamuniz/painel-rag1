@@ -671,6 +671,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                 resultado: goalData.resultado,
                                 quadrimestres: goalData.quadrimestres || {} 
                             };
+                            // Add previous year results if available
+                            if (goalData.resultado_2022 && masterData[goalData.id].yearly_data["2022"]) {
+                                // This assumes 'resultado_2022' is on 2023 data, etc.
+                                // It's a bit redundant if 2022 data is already processed but ensures it's there.
+                            }
+                            if (goalData.resultado_2023 && masterData[goalData.id].yearly_data["2023"]) {
+                               // Similar logic
+                            }
                         }
                     }
                 }
@@ -682,7 +690,7 @@ document.addEventListener('DOMContentLoaded', () => {
          // Add placeholder data for 2025
         allGoals.forEach(goal => {
             if (!goal.yearly_data["2025"]) {
-                 const finalYearData = goal.yearly_data["2024"]; 
+                 const finalYearData = goal.yearly_data["2024"] || goal.yearly_data["2023"] || goal.yearly_data["2022"]; 
                  goal.yearly_data["2025"] = {
                      esperado: finalYearData?.esperado || "N/A", 
                      resultado: "S/N",
@@ -751,11 +759,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (polaridade === 'MENOR') {
             if (resultadoNum < esperadoNum) return { text: "Superada", color: "green" };
-            if (resultadoNum === esperadoNum) return { text: "Alcançada", color: "green"}; // Changed to green
+            if (resultadoNum === esperadoNum) return { text: "Alcançada", color: "green"};
             return { text: "Não Alcançada", color: "red" };
         } else { // Default to MAIOR
              if (resultadoNum > esperadoNum) return { text: "Superada", color: "green"};
-             if (resultadoNum >= esperadoNum) return { text: "Alcançada", color: "green"}; // Changed to green
+             if (resultadoNum >= esperadoNum) return { text: "Alcançada", color: "green"};
              if (resultadoNum >= esperadoNum * 0.9) return { text: "Parcialmente Alcançada", color: "orange"};
              return { text: "Não Alcançada", color: "red"};
         }
@@ -974,6 +982,7 @@ document.addEventListener('DOMContentLoaded', () => {
         genButton.disabled = true;
         showLoading(contentContainer, "Gerando análise qualitativa...");
         (document.getElementById('action-plan-container')).classList.add('hidden'); 
+        (document.getElementById('export-action-plan-csv-btn'))?.classList.add('hidden');
         const yearData = goal.yearly_data[year];
 
         const prompt = `
@@ -1018,11 +1027,79 @@ document.addEventListener('DOMContentLoaded', () => {
             actionPlanBtn.disabled = false; 
         } catch (error) { showError(contentContainer, error); } finally { genButton.disabled = false; }
     }
+
+    function parseMarkdownTableToCsv(markdownTableText) {
+        if (!markdownTableText || typeof markdownTableText !== 'string') return "";
+        const lines = markdownTableText.trim().split('\n');
+        if (lines.length < 1) return ""; // Need at least a header row
+
+        const csvRows = [];
+
+        const escapeCsvCell = (cell) => {
+            let cleanedCell = cell.trim();
+            // If cell contains comma, newline, or double quote, enclose in double quotes
+            if (cleanedCell.includes(',') || cleanedCell.includes('\n') || cleanedCell.includes('"')) {
+                cleanedCell = `"${cleanedCell.replace(/"/g, '""')}"`; // Escape double quotes by doubling them
+            }
+            return cleanedCell;
+        };
+
+        let isTableContent = false;
+        lines.forEach((line, index) => {
+            line = line.trim();
+            if (!line.startsWith('|') || !line.endsWith('|')) {
+                // If we were in a table and this line is not part of it, stop processing further lines as table
+                if(isTableContent) isTableContent = false;
+                return;
+            }
+            isTableContent = true;
+
+
+            // Skip separator line (e.g., |---|---|---| or |:---|:--:|---:|)
+            // A more robust check for separator line:
+            if (line.match(/^\|[-:|'\s]+\|$/) && line.includes('-')) { // Check for presence of '-'
+                 if (index === 0) return; // Cannot be a separator if it's the first line
+                 // Check if the previous line was a header (not a separator itself)
+                 const prevLine = lines[index-1]?.trim();
+                 if (prevLine && prevLine.startsWith('|') && !prevLine.match(/^\|[-:|'\s]+\|$/)) {
+                    return; // This is likely a separator
+                 }
+            }
+
+
+            const cells = line.slice(1, -1).split('|').map(escapeCsvCell);
+            if (cells.length > 0 && cells.some(cell => cell.trim() !== '')) { // Ensure row is not just empty cells
+                csvRows.push(cells.join(','));
+            }
+        });
+
+        return csvRows.join('\n');
+    }
+
+    function downloadCsv(csvString, filename) {
+        const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' }); // Add BOM for Excel compatibility
+        const link = document.createElement("a");
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } else {
+            alert("Seu navegador não suporta o download automático. Por favor, copie o conteúdo manualmente se necessário.");
+        }
+    }
     
-    async function generateActionPlan(goal, analysisText) {
+    async function generateActionPlan(goal, analysisText, currentSelectedYear, currentPeriodText) {
         const contentContainer = document.getElementById('action-plan-content');
         const genButton = document.getElementById('generate-action-plan-btn');
+        const exportCsvButton = document.getElementById('export-action-plan-csv-btn');
+
         genButton.disabled = true;
+        if (exportCsvButton) exportCsvButton.classList.add('hidden');
         (document.getElementById('action-plan-container')).classList.remove('hidden');
         showLoading(contentContainer, "Elaborando plano de ação...");
 
@@ -1045,10 +1122,29 @@ document.addEventListener('DOMContentLoaded', () => {
             *   Formate a resposta exclusivamente como uma tabela Markdown. Não inclua texto introdutório ou conclusivo fora da tabela.
         `;
         try {
-            const text = await callGeminiAPI(prompt);
+            const markdownText = await callGeminiAPI(prompt);
             const converter = new showdown.Converter({tables: true, openLinksInNewWindow: true, simplifiedAutoLink: true, strikethrough: true});
-            contentContainer.innerHTML = converter.makeHtml(text);
-        } catch (error) { showError(contentContainer, error); } finally { genButton.disabled = false; }
+            contentContainer.innerHTML = converter.makeHtml(markdownText);
+
+            const csvContent = parseMarkdownTableToCsv(markdownText);
+            if (exportCsvButton) {
+                if (csvContent && csvContent.trim() !== "") {
+                    exportCsvButton.classList.remove('hidden');
+                    exportCsvButton.onclick = () => {
+                        const filename = `Plano_Acao_Meta_${goal.id}_${currentSelectedYear}_${currentPeriodText.replace(/º RDQA/g, 'Q').replace(/\s+/g, '_')}.csv`;
+                        downloadCsv(csvContent, filename);
+                    };
+                } else {
+                    exportCsvButton.classList.add('hidden');
+                     console.warn("CSV content is empty or invalid, hiding export button.");
+                }
+            }
+        } catch (error) {
+            showError(contentContainer, error);
+            if (exportCsvButton) exportCsvButton.classList.add('hidden');
+        } finally {
+            genButton.disabled = false;
+        }
     }
 
     async function exportModalContentToPDF(goal, selectedYear, periodText) {
@@ -1064,8 +1160,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     
         const actionPlanContainer = document.getElementById('action-plan-container');
+        const actionPlanContentElement = document.getElementById('action-plan-content');
         const actionPlanWasHidden = actionPlanContainer.classList.contains('hidden');
-        if (actionPlanWasHidden && document.getElementById('action-plan-content')?.innerHTML.trim() !== '') {
+        
+        // Temporarily show action plan if it has content and was hidden, for PDF generation
+        if (actionPlanWasHidden && actionPlanContentElement && actionPlanContentElement.innerHTML.trim() !== '') {
             actionPlanContainer.classList.remove('hidden');
         }
     
@@ -1083,19 +1182,39 @@ document.addEventListener('DOMContentLoaded', () => {
                  onclone: (documentClone) => {
                     const clonedContent = documentClone.getElementById('ai-export-content');
                     if (clonedContent) {
-                         // Ensure all nested content is visible and styled for capture
                         const analysisContent = clonedContent.querySelector('#qualitative-analysis-content');
+                        const planContainer = clonedContent.querySelector('#action-plan-container');
                         const planContent = clonedContent.querySelector('#action-plan-content');
-                        if (analysisContent) (analysisContent).style.display = 'block';
-                        if (planContent) (planContent).style.display = 'block';
 
-                        // Ensure headers are styled correctly in the clone
+                        if (analysisContent) (analysisContent).style.display = 'block';
+                        
+                        // Only make planContent visible if it has actual content
+                        if (planContainer && planContent && planContent.innerHTML.trim() !== '') {
+                           (planContainer).style.display = 'block'; // Show container
+                           (planContent).style.display = 'block'; // Show content
+                        } else if (planContainer) {
+                           (planContainer).style.display = 'none'; // Hide if no content
+                        }
+
+
                         clonedContent.querySelectorAll('h3').forEach(h => {
-                            (h).style.color = '#1f2937'; // Example: Ensure text color
-                            (h).style.fontSize = '1.25rem'; // Tailwind 'text-xl'
-                            (h).style.fontWeight = '700'; // Tailwind 'font-bold'
+                            (h).style.color = '#1f2937'; 
+                            (h).style.fontSize = '1.25rem'; 
+                            (h).style.fontWeight = '700';
+                            (h).style.marginBottom = '1rem'; // Ensure spacing
                         });
-                        // You might need to inline more styles if html2canvas doesn't pick them up from external CSS fully
+                         clonedContent.querySelectorAll('.ai-content table').forEach(table => {
+                            (table).style.width = '100%';
+                            (table).style.borderCollapse = 'collapse';
+                        });
+                        clonedContent.querySelectorAll('.ai-content th, .ai-content td').forEach(cell => {
+                            (cell).style.border = '1px solid #ddd';
+                            (cell).style.padding = '8px';
+                            (cell).style.textAlign = 'left';
+                        });
+                         clonedContent.querySelectorAll('.ai-content th').forEach(th => {
+                            (th).style.backgroundColor = '#f2f2f2';
+                        });
                     }
                 }
             });
@@ -1132,25 +1251,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const imageDisplayWidth = contentWidth;
             const imageDisplayHeight = (canvasOriginalHeight * imageDisplayWidth) / canvasOriginalWidth;
     
-            let canvasCutPositionY = 0; // Y-coordinate on the original canvas image
+            let canvasCutPositionY = 0; 
             let canvasHeightRemaining = canvasOriginalHeight;
     
             while (canvasHeightRemaining > 0) {
-                if (currentY > pdfHeight - margin - 10 && canvasHeightRemaining > 0) { // Need at least 10mm for image part
+                if (currentY > pdfHeight - margin - 10 && canvasHeightRemaining > 0) { 
                     pdf.addPage();
                     currentY = margin;
                 }
     
-                // Determine the height of the segment of the canvas to draw on the current PDF page
                 const availablePageHeightForImage = pdfHeight - margin - currentY;
-                // Convert this available PDF page height back to the canvas's original pixel height for slicing
                 let canvasSliceHeight = (availablePageHeightForImage / imageDisplayHeight) * canvasOriginalHeight;
-                canvasSliceHeight = Math.min(canvasSliceHeight, canvasHeightRemaining); // Don't try to slice more than remaining
+                canvasSliceHeight = Math.min(canvasSliceHeight, canvasHeightRemaining); 
                 
-                if (canvasSliceHeight <= 0 && canvasHeightRemaining > 0) { // Not enough space, or bad calculation
-                    if (currentY !== margin) pdf.addPage(); // Avoid adding page if already at top of new page
+                if (canvasSliceHeight <= 0 && canvasHeightRemaining > 0) { 
+                    if (currentY !== margin || (currentY === margin && availablePageHeightForImage <=0) ) pdf.addPage(); 
                     currentY = margin;
-                    // Recalculate slice for a full new page
                     const fullPageImageHeight = pdfHeight - 2 * margin;
                     canvasSliceHeight = Math.min( (fullPageImageHeight / imageDisplayHeight) * canvasOriginalHeight, canvasHeightRemaining);
                 }
@@ -1163,14 +1279,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         margin, currentY,
                         imageDisplayWidth, displaySegmentHeight,
                         undefined, 'FAST', 0,
-                        // Source image clipping parameters (all in original canvas pixels)
-                        0, // sx (start x on original canvas)
-                        canvasCutPositionY, // sy (start y on original canvas)
-                        canvasOriginalWidth, // sWidth (width of slice from original canvas)
-                        canvasSliceHeight  // sHeight (height of slice from original canvas)
+                        0, 
+                        canvasCutPositionY, 
+                        canvasOriginalWidth, 
+                        canvasSliceHeight  
                     );
                 }
-                currentY += displaySegmentHeight + 2; // Add a small gap after the image segment
+                currentY += displaySegmentHeight + 2; 
                 canvasCutPositionY += canvasSliceHeight;
                 canvasHeightRemaining -= canvasSliceHeight;
             }
@@ -1180,7 +1295,8 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Error generating PDF:", error);
             alert("Falha ao gerar o PDF. Verifique o console para mais detalhes.");
         } finally {
-            if (actionPlanWasHidden) {
+            // Restore visibility of action plan container if it was originally hidden
+            if (actionPlanWasHidden && actionPlanContainer) {
                 actionPlanContainer.classList.add('hidden');
             }
             exportButton.disabled = false;
@@ -1207,13 +1323,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let statusForModal = getStatus(goal, resultForModal, yearData.esperado);
 
-        // Calculate Variação
         let variacaoDisplay = "N/A";
         const esperadoNum = parseValue(yearData.esperado);
         const resultadoNum = parseValue(resultForModal);
 
         const isEsperadoPerc = typeof yearData.esperado === 'string' && yearData.esperado.includes('%');
-        // Ensure resultForModal is treated as string for .includes('%') check
         const stringResultForModal = String(resultForModal);
         const isResultadoPerc = typeof resultForModal === 'string' && stringResultForModal.includes('%');
         const isPercentageContext = isEsperadoPerc || isResultadoPerc;
@@ -1282,6 +1396,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div id="action-plan-container" class="hidden mb-6">
                                 <h3 class="text-xl font-bold text-gray-800 mb-4">Plano de Ação com IA ✨</h3>
                                 <div id="action-plan-content" class="ai-content text-gray-700 leading-relaxed min-h-[5rem]" aria-live="polite"></div>
+                                <button id="export-action-plan-csv-btn" class="hidden mt-4 w-full sm:w-auto bg-teal-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50">Exportar Plano para CSV</button>
                             </div>
                         </div>
                         <div class="flex flex-col sm:flex-row gap-4 mt-4">
@@ -1304,9 +1419,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         (document.getElementById('generate-analysis-btn')).addEventListener('click', () => generateQualitativeAnalysis(goal, resultForModal, statusForModal, periodText, selectedYear));
         (document.getElementById('generate-action-plan-btn')).addEventListener('click', (e) => {
-            const analysisText = (e.target).dataset.analysisText;
+            const analysisText = (e.currentTarget).dataset.analysisText;
             if (analysisText) {
-                generateActionPlan(goal, analysisText);
+                generateActionPlan(goal, analysisText, selectedYear, periodText);
             } else {
                 showError(document.getElementById('action-plan-content'), { name: "InputError", message: "Análise qualitativa não encontrada. Gere a análise primeiro." });
             }
