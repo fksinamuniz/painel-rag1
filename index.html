@@ -937,15 +937,20 @@
                             <div class="bg-${statusForModal.color}-100 text-${statusForModal.color}-800 p-4 rounded-lg flex flex-col items-center justify-center"><p class="text-sm font-medium">Status</p><p class="text-2xl font-bold">${statusForModal.text}</p></div>
                         </div>
                         <div class="mt-8 pt-6 border-t">
-                            <div id="qualitative-analysis-container" class="mb-6"><h3 class="text-xl font-bold text-gray-800 mb-4">Análise Qualitativa com IA ✨</h3><div id="qualitative-analysis-content" class="ai-content text-gray-700 leading-relaxed min-h-[5rem]"></div></div>
-                            <div id="action-plan-container" class="hidden mb-6"><h3 class="text-xl font-bold text-gray-800 mb-4">Plano de Ação com IA ✨</h3><div id="action-plan-content" class="ai-content text-gray-700 leading-relaxed min-h-[5rem]"></div></div>
-                            <div class="flex flex-col sm:flex-row gap-4">
-                                <button id="generate-analysis-btn" class="w-full sm:w-auto flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">Gerar Análise</button>
-                                <button id="generate-action-plan-btn" class="w-full sm:w-auto flex-1 hidden bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700">Elaborar Plano de Ação</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
+                            <div id="qualitative-analysis-container" class="mb-6">
+  <div class="flex items-center justify-between mb-2">
+    <h3 class="text-xl font-bold text-gray-800">Análise Qualitativa com IA ✨</h3>
+    <button id="export-qualitative-pdf" class="hidden bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm">Exportar PDF</button>
+  </div>
+  <div id="qualitative-analysis-content" class="ai-content"></div>
+</div>
+<div id="action-plan-container" class="hidden mb-6">
+  <div class="flex items-center justify-between mb-2">
+    <h3 class="text-xl font-bold text-gray-800">Plano de Ação com IA ✨</h3>
+    <button id="export-actionplan-pdf" class="hidden bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm">Exportar PDF</button>
+  </div>
+  <div id="action-plan-content" class="ai-content"></div>
+</div>;
             modal.classList.remove('hidden');
             document.getElementById('close-modal').addEventListener('click', () => modal.classList.add('hidden'));
             document.getElementById('generate-analysis-btn').addEventListener('click', () => generateQualitativeAnalysis(goal, resultForModal, statusForModal, periodText, selectedYear));
