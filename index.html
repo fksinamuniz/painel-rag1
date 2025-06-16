@@ -1,1192 +1,166 @@
-// Copyright 2024 Google LLC
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
 
-import { GoogleGenAI } from "@google/genai";
-
-// Initialize the GoogleGenAI client with the API key from environment variables
-const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
-
-// --- TYPE DEFINITIONS ---
-interface QuadrimestreData {
-    "1"?: string | number;
-    "2"?: string | number;
-    "3"?: string | number;
-}
-
-interface YearlyGoalData {
-    esperado: string | number;
-    resultado: string | number;
-    quadrimestres: QuadrimestreData;
-    resultado_2022?: string | number;
-    resultado_2023?: string | number;
-}
-
-interface Goal {
-    id: number;
-    title: string;
-    polaridade: string;
-    diretriz: string;
-    objetivo: string;
-    yearly_data: { [year: string]: YearlyGoalData };
-}
-
-interface RawQuadrimestreData {
-    "1": string | number;
-    "2": string | number;
-    "3": string | number;
-}
-
-interface RawGoalDataItem {
-    id: number;
-    title: string;
-    esperado: string | number;
-    resultado: string | number;
-    polaridade: string;
-    quadrimestres: RawQuadrimestreData;
-    resultado_2022?: string | number;
-    resultado_2023?: string | number;
-}
-
-interface RawObjetivoData {
-    [objetivoTitle: string]: RawGoalDataItem[];
-}
-
-interface RawDiretrizData {
-    [diretrizTitle: string]: RawObjetivoData;
-}
-
-interface RawDataSets {
-    [year: string]: RawDiretrizData;
-}
-
-
-// --- FULL DATASET ---
-// Data processed and consolidated from the provided CSV files.
-const dataSets: RawDataSets = {
-      "2022": {
-        "Diretriz 1: Fortalecimento da Atenção Primária à Saúde e aprimoramento das Redes de Atenção à Saúde ampliando o acesso com qualidade e eficiência.": {
-                "Objetivo 1.1: Aprimorar e fortalecer as ações e políticas estratégicas de saúde na atenção primária concomitante as redes de atenção em saúde, com o escopo de focar na promoção e prevenção da saúde.": [
-                    {"id":1,"title":"Aumentar a Cobertura de Agentes Comunitários de Saúde de 67,09% em 2020 para 80,00% em 2025.","esperado":"69%","resultado":"81,47%","polaridade":"maior","quadrimestres":{"1":"67,10%","2":"81,47%","3":"81,47%"}},
-                    {"id":2,"title":"Realizar ações assistenciais básicas complementares para a população indígena 03 vezes ao ano.","esperado":"3","resultado":"4","polaridade":"maior","quadrimestres":{"1":"1","2":"2","3":"4"}},
-                    {"id":3,"title":"Implantar assistência oftalmológica como ação integrante do Programa Saúde na Escola de 0 % para 100 % das escolas pactuadas em 2025.","esperado":"25%","resultado":"41,3%","polaridade":"maior","quadrimestres":{"1":"41,3%","2":"41,3%","3":"41,3%"}},
-                    {"id":4,"title":"Aumentar a cobertura de acompanhamento das condicionalidades de saúde do Programa Bolsa Família (BPF) de 60,94 % em 2019 para 80% em 2025.","esperado":"65%","resultado":"44,5%","polaridade":"maior","quadrimestres":{"1":"44,5%","2":"44,5%","3":"44,5%"}},
-                    {"id":5,"title":"Aumentar a cobertura populacional estimada pela estratégia Saúde da Família de 62,95 em 2020 para 80,00 em 2025.","esperado":"68%","resultado":"69,3%","polaridade":"maior","quadrimestres":{"1":"69,3%","2":"69,3%","3":"69,3%"}},
-                    {"id":6,"title":"Ampliar a cobertura populacional estimada pelas equipes de Atenção Básica de 78,93% em 2020 para 92,00% em 2025.","esperado":"81%","resultado":"100%","polaridade":"maior","quadrimestres":{"1":"100%","2":"100%","3":"100%"}},
-                    {"id":7,"title":"Ampliar a assistência ofertada por equipe multiprofissional e interdisciplinar na APS de 59,00 em 2019 para 64,00 em 2025.","esperado":"10,5","resultado":"16,1","polaridade":"maior","quadrimestres":{"1":"16,1","2":"16,1","3":"16,1"}},
-                    {"id":8,"title":"Ampliar oferta de exames laboratoriais para as unidades Básicas de saúde de de 30% em 2020 para 50% em 2025.","esperado":"35%","resultado":"67,4%","polaridade":"maior","quadrimestres":{"1":"67,4%","2":"67,4%","3":"67,4%"}},
-                    {"id":9,"title":"Reduzir em 10% o quantitativo de crianças integrantes no programa APLV até 2025.","esperado":"2,5%","resultado":"4,19%","polaridade":"menor","quadrimestres":{"1":"4,19%","2":"4,19%","3":"4,19%"}},
-                    {"id":10,"title":"Reduzir a tendência da gravidez de adolescentes de 10 a 19 anos de 15,30% em 2020 para 14,50% em 2025.","esperado":"14,9%","resultado":"15,2%","polaridade":"menor","quadrimestres":{"1":"15,2%","2":"15,2%","3":"15,2%"}},
-                    {"id":11,"title":"Aumentar a cobertura da vacina Poliomielite inativada e da Pentavalente de 36% em 2020 para 95% em 2025.","esperado":"95%","resultado":"51%","polaridade":"maior","quadrimestres":{"1":"51%","2":"51%","3":"51%"}},
-                    {"id":12,"title":"Ampliar o percentual de diabéticos com solicitação hemoglobina glicada de 11% em 2020 para 90% em 2025.","esperado":"40%","resultado":"33%","polaridade":"maior","quadrimestres":{"1":"33%","2":"33%","3":"33%"}},
-                    {"id":13,"title":"Aumentar a proporção de gestantes com pelo menos 06 (seis) consultas pré natal, sendo a primeira até a 20ª semana de gestação de 38% em 2020 para 80% em 2025.","esperado":"60%","resultado":"43%","polaridade":"maior","quadrimestres":{"1":"43%","2":"43%","3":"43%"}},
-                    {"id":14,"title":"Aumentar a proporção de gestantes com realização de exames para siflis e HIV de 67% em 2020 para 95% em 2025.","esperado":"75%","resultado":"77%","polaridade":"maior","quadrimestres":{"1":"77%","2":"77%","3":"77%"}},
-                    {"id":15,"title":"Aumentar o percentual de pessoas hipertensas com pressão arterial aferida em cada semestre de 14% em 2020 para 90% em 2025.","esperado":"50%","resultado":"28%","polaridade":"maior","quadrimestres":{"1":"28%","2":"28%","3":"28%"}},
-                    {"id":16,"title":"Aumentar a proporção de gestantes com atendimento odontológico de 22% em 2020 para 90% em 2025.","esperado":"60%","resultado":"61%","polaridade":"maior","quadrimestres":{"1":"61%","2":"61%","3":"61%"}},
-                    {"id":17,"title":"Ampliar o acesso a atenção odontológica na atenção básica de 52,17 em 2020 para 80,00% em 2025.","esperado":"65%","resultado":"57,9%","polaridade":"maior","quadrimestres":{"1":"57,9%","2":"57,9%","3":"57,9%"}},
-                    {"id":18,"title":"Implantar nas Unidade Básicas de Saúde o Prontuário Eletrônico de 61% em 2020 para 100% em 2025.","esperado":"80,5%","resultado":"75%","polaridade":"maior","quadrimestres":{"1":"75%","2":"75%","3":"75%"}}
-                ],
-                "Objetivo 1.2: Implementar a Politica Municipal de Assistência Farmacêutica na rede municipal de saúde.": [
-                    {"id":19,"title":"Implantar o cuidado farmacêutico em 50% das Unidades Básicas de Saúde de zona urbana.","esperado":"0","resultado":"4,16%","polaridade":"maior","quadrimestres":{"1":"4,16%","2":"4,16%","3":"4,16%"}},
-                    {"id":20,"title":"Implantar Farmácia Viva no município até 2025.","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":21,"title":"Implantar fitoterapia em 100% das Unidades Básicas de Saúde até 2025.","esperado":"100%","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":22,"title":"Promover 01 ação ao ano para o uso racional de medicamentos até 2025.","esperado":"1","resultado":"1","polaridade":"maior","quadrimestres":{"1":"0","2":"1","3":"1"}}
-                ],
-                "Objetivo 1.3: Promover a integração sistêmica nas redes de atenção à saúde, de ações e serviços de saúde com provisão de atenção contínua, integral, de qualidade, responsável e humanizada.": [
-                    {"id":23,"title":"Reduzir a mortalidade infantil de 12,18 em 2020 para 10 até 2025.","esperado":"11,5","resultado":"7,31","polaridade":"menor","quadrimestres":{"1":"7,4","2":"6,61","3":"7,31"}},
-                    {"id":24,"title":"Reduzir a mortalidade materna de 06 em 2020 para 0 até 2025.","esperado":"0","resultado":"3","polaridade":"menor","quadrimestres":{"1":"0","2":"0","3":"3"}},
-                    {"id":25,"title":"Aumentar o percentual de parto normal no SUS de 37,90% em 2020 para 60,00% até 2025.","esperado":"45%","resultado":"50,7%","polaridade":"maior","quadrimestres":{"1":"50,7%","2":"50,7%","3":"50,7%"}},
-                    {"id":26,"title":"Reduzir o número de sífilis congênita de 50 em 2020 para 20 em 2025.","esperado":"45","resultado":"12","polaridade":"menor","quadrimestres":{"1":"12","2":"12","3":"12"}},
-                    {"id":27,"title":"Reduzir a taxa de natalidade de 21,70% em 2020 para 18,00% até 2025.","esperado":"21%","resultado":"22%","polaridade":"menor","quadrimestres":{"1":"7,32%","2":"14,64%","3":"22%"}},
-                    {"id":28,"title":"Reduzir as internações de causas sensiveis a Atenção Básica de 24,16% em 2020 para 21% até 2025.","esperado":"23,5%","resultado":"21,15%","polaridade":"menor","quadrimestres":{"1":"25,31%","2":"21,5%","3":"21,15%"}},
-                    {"id":29,"title":"Ampliar de 0,26 em 2019 para 0,42 até 2025 a razão de mulheres na faixa etária de 25 a 64 anos com um exame citopatológico a cada três anos.","esperado":"0,28","resultado":"0,14","polaridade":"maior","quadrimestres":{"1":"0,14","2":"0,14","3":"0,14"}},
-                    {"id":30,"title":"Ampliar de 0,23 em 2020 para 0,35 em 2025 a razão de exames de mamografia de rastreamento realizados em mulheres de 50 a 69 anos.","esperado":"0,23","resultado":"0,26","polaridade":"maior","quadrimestres":{"1":"0,26","2":"0,26","3":"0,26"}},
-                    {"id":31,"title":"Reduzir de 217,47/100.000 hab. em 2020 para 113,51/100.000 até 2025 a taxa de mortalidade prematura (30 a 69 anos) por DCNT.","esperado":"180,58","resultado":"80,3","polaridade":"menor","quadrimestres":{"1":"80,3","2":"80,3","3":"80,3"}},
-                    {"id":32,"title":"Alcançar 50% de pessoas idosas na participação das atividades coletivas/grupais em relação ao número de idosos cadastrados na atenção básica.","esperado":"23%","resultado":"3,56%","polaridade":"maior","quadrimestres":{"1":"3,56%","2":"3,56%","3":"3,56%"}},
-                    {"id":33,"title":"Alcançar 80% das equipes de eSF e eAP capacitadas em envelhecimento e saúde da pessoa idosa.","esperado":"40%","resultado":"14%","polaridade":"maior","quadrimestres":{"1":"14%","2":"14%","3":"14%"}},
-                    {"id":34,"title":"Reduzir em 3% a taxa de internação de pessoas idosas por fratura de fêmur.","esperado":"3,8%","resultado":"1,07%","polaridade":"menor","quadrimestres":{"1":"1,07%","2":"1,07%","3":"1,07%"}},
-                    {"id":35,"title":"Alcançar 60% de pessoas idosas com avaliação multidimensional realizada, em relação aos número de idosos cadastrados no e-sus/ab (APS).","esperado":"15%","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":36,"title":"Ampliar a cobertura do teste de triagem neonatal de 34,97% em 2020 para 80% em 2025 de teste realizado no SUS.","esperado":"40%","resultado":"59%","polaridade":"maior","quadrimestres":{"1":"59%","2":"59%","3":"59%"}},
-                    {"id":37,"title":"Implantar 01 serviço de Saúde Especializado em Reabilitação por Meio da Habilitação do CER IV até 2025.","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":38,"title":"Ampliar a proporção de atendimentos odontológico a pessoa com deficiência de 15,81% em 2020 para 60% ate 2025.","esperado":"30%","resultado":"36,1%","polaridade":"maior","quadrimestres":{"1":"36,1%","2":"36,1%","3":"36,1%"}},
-                    {"id":39,"title":"Reduzir a proporção de recém-Nascidos com Apgar menor de 7 no 5º minuto na Maternidade Municipal de 1,50% em 2020 para 1% até 2025.","esperado":"1,4%","resultado":"1,84%","polaridade":"menor","quadrimestres":{"1":"1,84%","2":"1,84%","3":"1,84%"}},
-                    {"id":40,"title":"Implantar 01 de linha de cuidado para atenção ás pessoas com transtorno do espectro (TEA) Autista e suas familias até 2025.","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":41,"title":"Ampliar em 25% ao ano as ações de matriciamento realizadas pelo Centro de Atenção Psicossocial (CAPS) com equipes de Atenção Primária em Saúde (APS).","esperado":"25%","resultado":"88%","polaridade":"maior","quadrimestres":{"1":"88%","2":"88%","3":"88%"}},
-                    {"id":42,"title":"Aumentar em 70% o número de casos notificados de tentativa de suicídio até 2025.","esperado":"91","resultado":"82","polaridade":"maior","quadrimestres":{"1":"82","2":"82","3":"82"}},
-                    {"id":43,"title":"Reduzir em 50% até 2025, as reinternações de residentes por transtornos mental ocorridas em até 12 meses, após a 1ª internação.","esperado":"11","resultado":"39","polaridade":"menor","quadrimestres":{"1":"39","2":"39","3":"39"}},
-                    {"id":49,"title":"Reduzir em 12% ao ano a taxa de mortalidade por causas externas na população masculina entre 20 a 59 anos.","esperado":"107,32","resultado":"70,8","polaridade":"menor","quadrimestres":{"1":"70,8","2":"70,8","3":"70,8"}},
-                    {"id":50,"title":"Aumentar em 0,10 ao ano a procura pelas consultas médicas na APS/SUS pela população masculina na faixa etária entre 20 a 59 anos.","esperado":"0,46","resultado":"0,12","polaridade":"maior","quadrimestres":{"1":"0,12","2":"0,12","3":"0,12"}}
-                ]
-            },
-            "Diretriz 2: Ampliação e aperfeiçoamento do acesso às ações de média e alta complexidade ambulatorial e hospitalar.": {
-                "Objetivo 2.1: Ampliar e qualificar o acesso aos serviços de saúde de qualidade, em tempo adequado, com ênfase na humanização, equidade e no atendimento das necessidades de saúde da Média e Alta Complexidade Ambulatorial e hospitalar.": [
-                    {"id":44,"title":"Reduzir o tempo de espera para atendimento médico em até 10 minutos para primeiro atendimento de pacientes classificados na triagem como laranja.","esperado":"10","resultado":"13","polaridade":"menor","quadrimestres":{"1":"14","2":"14","3":"13"}},
-                    {"id":45,"title":"Reduzir de 20,54% em 2020 para 18% 2025 os óbitos nas internações por Acidente Vascular Cerebral.","esperado":"20%","resultado":"28,5%","polaridade":"menor","quadrimestres":{"1":"28,5%","2":"28,5%","3":"28,5%"}},
-                    {"id":46,"title":"Reduzir os óbitos nas internações por infarto agudo do miocárdio (IAM) de 7,04% em 2020 para 4,99 em 2025.","esperado":"6,5%","resultado":"3,84%","polaridade":"menor","quadrimestres":{"1":"3,84%","2":"3,84%","3":"3,84%"}},
-                    {"id":47,"title":"Ampliar o número de pessoas assistidas em hospitais quando acidentadas de 48,78% em 2020 para 60% até 2025.","esperado":"51%","resultado":"45,8%","polaridade":"maior","quadrimestres":{"1":"45,8%","2":"45,8%","3":"45,8%"}},
-                    {"id":48,"title":"Reduzir o tempo resposta de 21 minutos em 2019 para 15 minutos em 2025.","esperado":"20'","resultado":"19'","polaridade":"menor","quadrimestres":{"1":"19'","2":"19'","3":"19'"}},
-                    {"id":51,"title":"Aumentar o número de procedimentos ambulatoriais de média complexidade para a população residente de 1% em 2021 para 2% em 2025.","esperado":"1,25%","resultado":"1,15%","polaridade":"maior","quadrimestres":{"1":"0,32%","2":"0,82%","3":"1,15%"}},
-                    {"id":52,"title":"Aumentar os procedimentos de reabilitação executados, em 2021, em 50%, até 2025.","esperado":"25%","resultado":"19,5%","polaridade":"maior","quadrimestres":{"1":"-63,61%","2":"21,9%","3":"19,5%"}},
-                    {"id":53,"title":"Informatizar 100% dos processos de trabalho das unidades assistenciais e administrativas do hospital até 2022.","esperado":"50%","resultado":"21,2%","polaridade":"maior","quadrimestres":{"1":"11,8%","2":"11,8%","3":"21,2%"}},
-                    {"id":54,"title":"100% do protocolos implantados nas unidades assistenciais (clínica médica, cirúrgica, gineco obstétrica, pediátrica, UTI e UCI, urgência e emergência ) até 2025.","esperado":"40%","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":55,"title":"Alcançar a taxa de ocupação do leito hospitalar em 85% até 2025.","esperado":"75%","resultado":"89,9%","polaridade":"maior","quadrimestres":{"1":"86,5%","2":"89,5%","3":"89,9%"}},
-                    {"id":56,"title":"Redução da taxa de mortalidade hospitalar para 3,50 até 2025.","esperado":"4,5%","resultado":"3,65%","polaridade":"menor","quadrimestres":{"1":"3,8%","2":"4,34%","3":"3,65%"}},
-                    {"id":57,"title":"Redução da taxa de infecção geral para 5% até 2025.","esperado":"12%","resultado":"3,91%","polaridade":"menor","quadrimestres":{"1":"4,2%","2":"4,3%","3":"3,91%"}},
-                    {"id":58,"title":"Reduzir para 4 dias o tempo médio de internação hospitalar até 2025 com exceção da obstetrícia, psiquiatria ou internação prolongada.","esperado":"4,3","resultado":"7","polaridade":"menor","quadrimestres":{"1":"6","2":"5","3":"7"}},
-                    {"id":59,"title":"Atingir 70% dos dos servidores treinados com carga horária de 30h por ano até 2025.","esperado":"55%","resultado":"28,1%","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"28,1%"}},
-                    {"id":60,"title":"Reduzir evento sentinela em zero, até 2025.","esperado":"10","resultado":"0","polaridade":"menor","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":61,"title":"Alcançar 85% de satisfação do usuário até o final de 2025.","esperado":"70%","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}}
-                ]
-            },
-            "Diretriz 3: Fortalecimento das ações stratégicas de vigilância em Saúde.":{
-                "Objetivo 3.1: Fortalecer as ações de vigilância para o controle das doenças e agravos transmissíveis e não transmissiveis, e promoção da saúde, desenvolvendo ações de vigilância sanitária de interesse à saúde e implementando ações de prevenção e detecção e tratamento de IST'S, Hepatites Virais.":[
-                    {"id":62,"title":"Reduzir a incidencia de AIDS em menores de 5 anos em 0 até 2025.","esperado":"0","resultado":"1","polaridade":"menor","quadrimestres":{"1":"0","2":"0","3":"1"}},
-                    {"id":63,"title":"Ampliar a proporção de analises realizadas em amostras de água para consumo humano.","esperado":"100%","resultado":"16,8%","polaridade":"maior","quadrimestres":{"1":"61,9%","2":"46,7%","3":"16,8%"}},
-                    {"id":64,"title":"Realizar exames Anti-HIV dos casos novos de tuberculose em 100% até 2025.","esperado":"100%","resultado":"100%","polaridade":"maior","quadrimestres":{"1":"100%","2":"100%","3":"100%"}},
-                    {"id":65,"title":"Aumentar a proporção de registro de óbitos com causa básica definida em 98% até 2025.","esperado":"97%","resultado":"97,7%","polaridade":"maior","quadrimestres":{"1":"97,2%","2":"96,8%","3":"97,7%"}},
-                    {"id":66,"title":"Alcançar 100% das vacinas selecionadas com cobertura vacinal de 95% de Crianças menores de 1 ano de idade.","esperado":"95%","resultado":"0%","polaridade":"maior","quadrimestres":{"1":"0%","2":"0%","3":"0%"}},
-                    {"id":67,"title":"Aumentar o percentual dos contatos examinados dos casos novos de hanseniase, nos anos das coortes de 76,70% em 2020 para 85% até 2025.","esperado":"85%","resultado":"77,6%","polaridade":"maior","quadrimestres":{"1":"77,6%","2":"77,6%","3":"77,6%"}},
-                    {"id":68,"title":"Percentual de unidades de saúde com ações de promoção da saúde, prevenção e assistência aos pacientes de hepatites virais de 67% em 2020 para 75% em 2025.","esperado":"72%","resultado":"80%","polaridade":"maior","quadrimestres":{"1":"80%","2":"80%","3":"80%"}},
-                    {"id":69,"title":"Encerrar 90% ou mais das doenças compulsórias imediatas registradas no Sinan, em até 60 dias a partir da data de notificação.","esperado":"90%","resultado":"100%","polaridade":"maior","quadrimestres":{"1":"100%","2":"100%","3":"100%"}},
-                    {"id":70,"title":"Realizar no mínimo seis grupos de ações de Vigilância Sanitária em 100% até 2025.","esperado":"100%","resultado":"100%","polaridade":"maior","quadrimestres":{"1":"100%","2":"100%","3":"100%"}},
-                    {"id":71,"title":"Manter número de casos autóctones de malária 0 em 2020 para 0 até 2025.","esperado":"0","resultado":"0","polaridade":"menor","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":72,"title":"Ampliar o número de Unidades de Saúde com serviço de notificação contínua da violência doméstica, sexual e outras violências de 18 em 2020 para 33 até 2025.","esperado":"22","resultado":"26","polaridade":"maior","quadrimestres":{"1":"26","2":"26","3":"26"}},
-                    {"id":73,"title":"Manter o número absoluto de óbito por dengue em 0 até 2025.","esperado":"0","resultado":"0","polaridade":"menor","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":74,"title":"Manter investigação dos Obitos Maternos em 100% até 2025.","esperado":"100%","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":75,"title":"Aumentar as investigações dos Óbitos de mulheres em Idade fértil (10 a 49 anos MIF) de 78,30% em 2020 para 90% até 2025.","esperado":"80%","resultado":"100%","polaridade":"maior","quadrimestres":{"1":"100%","2":"100%","3":"100%"}},
-                    {"id":76,"title":"Ampliar ações de vigilância em saúde do trabalhador de 1 ação ao ano em 2020 para 5 ações ao ano até 2025.","esperado":"2","resultado":"4","polaridade":"maior","quadrimestres":{"1":"4","2":"4","3":"4"}},
-                    {"id":77,"title":"Realizar 4 ciclos de visita domiciliar, dos 6 preconizados, com minimo de 80% de cobertura de imóveis visitados para controle vetorial da dengue.","esperado":"4","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}}
-                ]
-            },
-            "Diretriz 4: Fortalezer a gestão do SUS, com aprimoramento da gestão da informação e valorização da educação permanente em saúde.":{
-                "Objetivo 4.1: Implementar Ações para Valorização e Qualificação dos Servidores, aprimorando os processos de planejamento, monitoramento, controle, licenças e habilitações.":[
-                    {"id":78,"title":"Implantar a gestão de centros de custos na rede de saúde SUS em 100% até 2025.","esperado":"20%","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":79,"title":"100% dos serviços realizando Ações de Educação Permanente até 2025.","esperado":"40%","resultado":"55%","polaridade":"maior","quadrimestres":{"1":"55%","2":"55%","3":"55%"}},
-                    {"id":80,"title":"Alcançar 100% dos novos trabalhadores concursados e contratados, com capacitação introdutória, antes de ingressarem nos serviços.","esperado":"70%","resultado":"80%","polaridade":"maior","quadrimestres":{"1":"80%","2":"80%","3":"80%"}},
-                    {"id":81,"title":"Alcançar 75% dos profissionais de saúde com ações de qualidade de vida e saúde do trabalhador.","esperado":"20%","resultado":"28%","polaridade":"maior","quadrimestres":{"1":"28%","2":"28%","3":"28%"}},
-                    {"id":82,"title":"Alcançar 75% dos serviços de saúde com a implantação dos GTH com plano de trabalho.","esperado":"20%","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":83,"title":"Criar 01 projeto anualmente de articulação de talentos na SEMSA nas áreas (arte/cultura e produção científica), até 2025.","esperado":"1","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":84,"title":"Alcançar 90% de habilitação dos serviços ofertados até 2025.","esperado":"75%","resultado":"40%","polaridade":"maior","quadrimestres":{"1":"40%","2":"40%","3":"40%"}},
-                    {"id":85,"title":"Alcançar 40% de imóveis registrados até 2025.","esperado":"15%","resultado":"33%","polaridade":"maior","quadrimestres":{"1":"33%","2":"33%","3":"33%"}},
-                    {"id":86,"title":"Alcançar 50% de imóveis com Licença de Operação Ambiental até 2025.","esperado":"10%","resultado":"3,4%","polaridade":"maior","quadrimestres":{"1":"3,4%","2":"3,4%","3":"3,4%"}},
-                    {"id":87,"title":"Alcançar 50% de habite-se dos prédios públicos até 2025.","esperado":"10%","resultado":"6,9%","polaridade":"maior","quadrimestres":{"1":"6,9%","2":"6,9%","3":"6,9%"}}
-                ]
-            },
-            "Diretriz 5: Ampliação dos Investimentos em Saúde.":{
-                "Objetivo 5.1: Construir, ampliar e equipar as unidades de saúde.":[
-                    {"id":88,"title":"Ampliar a estrutura física de 07 unidades básicas de saúde até 2025.","esperado":"1","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":89,"title":"Construir 06 unidades básicas de saúde até 2025.","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":90,"title":"Equipar as unidades de saúde que foram ampliadas e construidas, em 100% até 2025.","esperado":"100%","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":91,"title":"Construir 01 de Central de Imunização até 2025.","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":92,"title":"Construir 01 Centro de Zoonoses até 2025.","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":93,"title":"Construir 02 Centros de Atenção Psicossocial até 2025 (Caps II caps i).","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":94,"title":"Construir 02 base descentralizada do SAMU até 2025.","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":95,"title":"Construir 01 Centro de Reabilitação tipo IV com oficina ortopédica até 2025.","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":96,"title":"Ampliar estrutura fisica do Pronto Socorro até 20025.","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":97,"title":"Construir 01 heliponto até 2025.","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}}
-                ]
-            }
-        },
-        "2023": {
-            "Diretriz 1: Fortalecimento da Atenção Primária à Saúde e aprimoramento das Redes de Atenção à Saúde ampliando o acesso com qualidade e eficiência.": {
-                "Objetivo 1.1: Aprimorar e fortalecer as ações e políticas estratégicas de saúde na atenção primária concomitante as redes de atenção em saúde, com o escopo de focar na promoção e prevenção da saúde.": [
-                    {"id":1, "title":"Aumentar a Cobertura de Agentes Comunitários de Saúde de 67,09% em 2020 para 80,00% em 2025.","esperado":"75%","resultado":"81,47%","resultado_2022":"81,47%","polaridade":"maior", "quadrimestres": {"1": "67,1%", "2": "81,47%", "3": "81,47%"}},
-                    {"id":2, "title":"Realizar ações assistenciais básicas complementares para a população indígena 03 vezes ao ano.","esperado":"3","resultado":"4","resultado_2022":"4","polaridade":"maior", "quadrimestres": {"1": "1", "2": "2", "3": "4"}},
-                    {"id":3, "title":"Implantar assistência oftalmológica como ação integrante do Programa Saúde na Escola de 0 % para 100 % das escolas pactuadas em 2025.","esperado":"50%","resultado":"39%","resultado_2022":"41,3%","polaridade":"maior", "quadrimestres": {"1": "41,3%", "2": "48,04%", "3": "39%"}},
-                    {"id":4, "title":"Aumentar a cobertura de acompanhamento das condicionalidades de saúde do Programa Bolsa Família (BPF) de 60,94 % em 2019 para 80% em 2025.","esperado":"70%","resultado":"71,56%","resultado_2022":"44,5%","polaridade":"maior", "quadrimestres": {"1": "44,5%", "2": "68,89%", "3": "71,56%"}},
-                    {"id":5, "title":"Aumentar a cobertura populacional estimada pela estratégia Saúde da Família de 62,95 em 2020 para 80,00 em 2025.","esperado":"72%","resultado":"73,85%","resultado_2022":"69,3%","polaridade":"maior", "quadrimestres": {"1": "69,3%", "2": "88,6%", "3": "73,85%"}},
-                    {"id":6, "title":"Ampliar a cobertura populacional estimada pelas equipes de Atenção Básica de 78,93% em 2020 para 92,00% em 2025.","esperado":"83%","resultado":"95,97%","resultado_2022":"100%","polaridade":"maior", "quadrimestres": {"1": "100%", "2": "100%", "3": "95,97%"}},
-                    {"id":7, "title":"Ampliar a assistência ofertada por equipe multiprofissional e interdisciplinar na APS de 59,00 em 2019 para 64,00 em 2025.","esperado":"11,82","resultado":"15,9","resultado_2022":"16,1","polaridade":"maior", "quadrimestres": {"1": "16,1", "2": "18,8", "3": "15,9"}},
-                    {"id":8, "title":"Ampliar oferta de exames laboratoriais para as unidades Básicas de saúde de de 30% em 2020 para 50% em 2025.","esperado":"40%","resultado":"51%","resultado_2022":"67,4%","polaridade":"maior", "quadrimestres": {"1": "67,4%", "2": "50,55%", "3": "51%"}},
-                    {"id":9, "title":"Reduzir em 10% o quantitativo de crianças integrantes no programa APLV até 2025.","esperado":"5%","resultado":"36,04%","resultado_2022":"4,19%","polaridade":"menor", "quadrimestres": {"1": "4,19%", "2": "0,00%", "3": "36,04%"}},
-                    {"id":10, "title":"Reduzir a tendência da gravidez de adolescentes de 10 a 19 anos de 15,30% em 2020 para 14,50% em 2025.","esperado":"14,7%","resultado":"14,26%","resultado_2022":"15,2%","polaridade":"menor", "quadrimestres": {"1": "15,2%", "2": "13,7%", "3": "14,26%"}},
-                    {"id":11, "title":"Aumentar a cobertura da vacina Poliomielite inativada e da Pentavalente de 36% em 2020 para 95% em 2025.","esperado":"95%","resultado":"60%","resultado_2022":"51%","polaridade":"maior", "quadrimestres": {"1": "51%", "2": "60,47%", "3": "60%"}},
-                    {"id":12, "title":"Ampliar o percentual de diabéticos com solicitação hemoglobina glicada de 11% em 2020 para 90% em 2025.","esperado":"60%","resultado":"31%","resultado_2022":"33%","polaridade":"maior", "quadrimestres": {"1": "33%", "2": "31,23%", "3": "31%"}},
-                    {"id":13, "title":"Aumentar a proporção de gestantes com pelo menos 06 (seis) consultas pré natal, sendo a primeira até a 20ª semana de gestação de 38% em 2020 para 80% em 2025.","esperado":"66%","resultado":"42%","resultado_2022":"43%","polaridade":"maior", "quadrimestres": {"1": "43%", "2": "36,98%", "3": "42%"}},
-                    {"id":14, "title":"Aumentar a proporção de gestantes com realização de exames para siflis e HIV de 67% em 2020 para 95% em 2025.","esperado":"80%","resultado":"67%","resultado_2022":"77%","polaridade":"maior", "quadrimestres": {"1": "77%", "2": "67,91%", "3": "67%"}},
-                    {"id":15, "title":"Aumentar o percentual de pessoas hipertensas com pressão arterial aferida em cada semestre de 14% em 2020 para 90% em 2025.","esperado":"65%","resultado":"25%","resultado_2022":"28%","polaridade":"maior", "quadrimestres": {"1": "28%", "2": "30,97%", "3": "25%"}},
-                    {"id":16, "title":"Aumentar a proporção de gestantes com atendimento odontológico de 22% em 2020 para 90% em 2025.","esperado":"70%","resultado":"59%","resultado_2022":"61%","polaridade":"maior", "quadrimestres": {"1": "61%", "2": "63,99%", "3": "59%"}},
-                    {"id":17, "title":"Ampliar o acesso a atenção odontológica na atenção básica de 52,17 em 2020 para 80,00% em 2025.","esperado":"70%","resultado":"65.6%","resultado_2022":"57,9%","polaridade":"maior", "quadrimestres": {"1": "57,9%", "2": "59,30%", "3": "65,6%"}},
-                    {"id":18, "title":"Implantar nas Unidade Básicas de Saúde o Prontuário Eletrônico de 61% em 2020 para 100% em 2025.","esperado":"100%","resultado":"100%","resultado_2022":"75%","polaridade":"maior", "quadrimestres": {"1": "75%", "2": "100%", "3": "100%"}}
-                ],
-                "Objetivo 1.2: Implementar a Politica Municipal de Assistência Farmacêutica na rede municipal de saúde.": [
-                    {"id":19, "title":"Implantar o cuidado farmacêutico em 50% das Unidades Básicas de Saúde de zona urbana.","esperado":"15%","resultado":"4,16%","resultado_2022":"4,16%","polaridade":"maior", "quadrimestres": {"1": "4,16%", "2": "4,16%", "3": "4,16%"}},
-                    {"id":20, "title":"Implantar Farmácia Viva no município até 2025.","esperado":"0","resultado":"NA","resultado_2022":"0","polaridade":"maior", "quadrimestres": {"1": "0", "2": "0", "3": "NA"}},
-                    {"id":21, "title":"Implantar fitoterapia em 100% das Unidades Básicas de Saúde até 2025.","esperado":"100%","resultado":"NA","resultado_2022":"0","polaridade":"maior", "quadrimestres": {"1": "0", "2": "0", "3": "NA"}},
-                    {"id":22, "title":"Promover 01 ação ao ano para o uso racional de medicamentos até 2025.","esperado":"1","resultado":"1","resultado_2022":"1","polaridade":"maior", "quadrimestres": {"1": "0", "2": "1", "3": "1"}}
-                ],
-                "Objetivo 1.3: Promover a integração sistêmica nas redes de atenção à saúde, de ações e serviços de saúde com provisão de atenção contínua, integral, de qualidade, responsável e humanizada.": [
-                    {"id":23,"title":"Reduzir a mortalidade infantil de 12,18 em 2020 para 10 até 2025.","esperado":"11","resultado":"13,01","resultado_2022":"7,31","polaridade":"menor","quadrimestres":{"1":"8,14","2":"11,09","3":"13,01"}},
-                    {"id":24,"title":"Reduzir a mortalidade materna de 06 em 2020 para 0 até 2025.","esperado":"0","resultado":"3","resultado_2022":"3","polaridade":"menor","quadrimestres":{"1":"0","2":"1","3":"3"}},
-                    {"id":25,"title":"Aumentar o percentual de parto normal no SUS de 37,90% em 2020 para 60,00% até 2025.","esperado":"49%","resultado":"50,18%","resultado_2022":"50,7%","polaridade":"maior","quadrimestres":{"1":"50,7%","2":"50,26%","3":"50,18%"}},
-                    {"id":26,"title":"Reduzir o número de sífilis congênita de 50 em 2020 para 20 em 2025.","esperado":"35","resultado":"25","resultado_2022":"12","polaridade":"menor","quadrimestres":{"1":"12","2":"22","3":"25"}},
-                    {"id":27,"title":"Reduzir a taxa de natalidade de 21,70% em 2020 para 18,00% até 2025.","esperado":"20%","resultado":"21,25%","resultado_2022":"22%","polaridade":"menor","quadrimestres":{"1":"7,29%","2":"14,83%","3":"21,25%"}},
-                    {"id":28,"title":"Reduzir as internações de causas sensiveis a Atenção Básica de 24,16% em 2020 para 21% até 2025.","esperado":"23%","resultado":"23,46%","resultado_2022":"21,15%","polaridade":"menor","quadrimestres":{"1":"24%","2":"28,42%","3":"23,46%"}},
-                    {"id":29,"title":"Ampliar de 0,26 em 2019 para 0,42 até 2025 a razão de mulheres na faixa etária de 25 a 64 anos com um exame citopatológico a cada três anos.","esperado":"0,32","resultado":"0,33","resultado_2022":"0,14","polaridade":"maior","quadrimestres":{"1":"0,14","2":"0,23","3":"0,33"}},
-                    {"id":30,"title":"Ampliar de 0,23 em 2020 para 0,35 em 2025 a razão de exames de mamografia de rastreamento realizados em mulheres de 50 a 69 anos.","esperado":"0,25","resultado":"0,31","resultado_2022":"0,26","polaridade":"maior","quadrimestres":{"1":"0,26","2":"0,29","3":"0,31"}},
-                    {"id":31,"title":"Reduzir de 217,47/100.000 hab. em 2020 para 113,51/100.000 até 2025 a taxa de mortalidade prematura (30 a 69 anos) por DCNT.","esperado":"157,12","resultado":"212,89","resultado_2022":"80,3","polaridade":"menor","quadrimestres":{"1":"80,3","2":"169,9","3":"212,89"}},
-                    {"id":32,"title":"Alcançar 50% de pessoas idosas na participação das atividades coletivas/grupais em relação ao número de idosos cadastrados na atenção básica.","esperado":"33%","resultado":"11,07%","resultado_2022":"3,56%","polaridade":"maior","quadrimestres":{"1":"3,56%","2":"10,7%","3":"11,07%"}},
-                    {"id":33,"title":"Alcançar 80% das equipes de eSF e eAP capacitadas em envelhecimento e saúde da pessoa idosa.","esperado":"60%","resultado":"33,9%","resultado_2022":"14%","polaridade":"maior","quadrimestres":{"1":"14%","2":"13,2%","3":"33,9%"}},
-                    {"id":34,"title":"Reduzir em 3% a taxa de internação de pessoas idosas por fratura de fêmur.","esperado":"3,32%","resultado":"2,33%","resultado_2022":"1,07%","polaridade":"menor","quadrimestres":{"1":"1,07%","2":"2,17%","3":"2,33%"}},
-                    {"id":35,"title":"Alcançar 60% de pessoas idosas com avaliação multidimensional realizada, em relação aos número de idosos cadastrados no e-sus/ab (APS).","esperado":"30%","resultado":"6,8%","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"2,29%","3":"6,8%"}},
-                    {"id":36,"title":"Ampliar a cobertura do teste de triagem neonatal de 34,97% em 2020 para 80% em 2025 de teste realizado no SUS.","esperado":"50%","resultado":"62%","resultado_2022":"59%","polaridade":"maior","quadrimestres":{"1":"59%","2":"45,18%","3":"62%"}},
-                    {"id":37,"title":"Implantar 01 serviço de Saúde Especializado em Reabilitação por Meio da Habilitação do CER IV até 2025.","esperado":"0","resultado":"NA","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"NA"}},
-                    {"id":38,"title":"Ampliar a proporção de atendimentos odontológico a pessoa com deficiência de 15,81% em 2020 para 60% ate 2025.","esperado":"40%","resultado":"91,68%","resultado_2022":"36,1%","polaridade":"maior","quadrimestres":{"1":"36,1%","2":"Não Mensurado","3":"91,68%"}},
-                    {"id":39,"title":"Reduzir a proporção de recém-Nascidos com Apgar menor de 7 no 5º minuto na Maternidade Municipal de 1,50% em 2020 para 1% até 2025.","esperado":"1,3%","resultado":"1,98%","resultado_2022":"1,84%","polaridade":"menor","quadrimestres":{"1":"1,84%","2":"1,5%","3":"1,98%"}},
-                    {"id":40,"title":"Implantar 01 de linha de cuidado para atenção ás pessoas com transtorno do espectro (TEA) Autista e suas familias até 2025.","esperado":"1","resultado":"NA","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"NA"}},
-                    {"id":41,"title":"Ampliar em 25% ao ano as ações de matriciamento realizadas pelo Centro de Atenção Psicossocial (CAPS) com equipes de Atenção Primária em Saúde (APS).","esperado":"50%","resultado":"91%","resultado_2022":"88%","polaridade":"maior","quadrimestres":{"1":"88%","2":"Não Mensurado","3":"91%"}},
-                    {"id":42,"title":"Aumentar em 70% o número de casos notificados de tentativa de suicídio até 2025.","esperado":"104","resultado":"84","resultado_2022":"82","polaridade":"maior","quadrimestres":{"1":"47","2":"82","3":"84"}},
-                    {"id":43,"title":"Reduzir em 50% até 2025, as reinternações de residentes por transtornos mental ocorridas em até 12 meses, após a 1ª internação.","esperado":"9","resultado":"148","resultado_2022":"39","polaridade":"menor","quadrimestres":{"1":"28","2":"39","3":"148"}},
-                    {"id":49,"title":"Reduzir em 12% ao ano a taxa de mortalidade por causas externas na população masculina entre 20 a 59 anos.","esperado":"146,62","resultado":"203,26","resultado_2022":"70,8","polaridade":"menor","quadrimestres":{"1":"70,8","2":"32","3":"203,26"}},
-                    {"id":50,"title":"Aumentar em 0,10 ao ano a procura pelas consultas médicas na APS/SUS pela população masculina na faixa etária entre 20 a 59 anos.","esperado":"0,56","resultado":"0,36","resultado_2022":"0,12","polaridade":"maior","quadrimestres":{"1":"0,12","2":"0,24","3":"0,36"}}
-                ]
-            },
-            "Diretriz 2: Ampliação e aperfeiçoamento do acesso às ações de média e alta complexidade ambulatorial e hospitalar.": {
-                "Objetivo 2.1: Ampliar e qualificar o acesso aos serviços de saúde de qualidade, em tempo adequado, com ênfase na humanização, equidade e no atendimento das necessidades de saúde da Média e Alta Complexidade Ambulatorial e hospitalar.": [
-                    {"id":44,"title":"Reduzir o tempo de espera para atendimento médico em até 10 minutos para primeiro atendimento de pacientes classificados na triagem como laranja.","esperado":"10","resultado":"14:16","resultado_2022":"13","polaridade":"menor", "quadrimestres":{"1":"14","2":"13","3":"14:16"}},
-                    {"id":45,"title":"Reduzir de 20,54% em 2020 para 18% 2025 os óbitos nas internações por Acidente Vascular Cerebral.","esperado":"19,5%","resultado":"22,34%","resultado_2022":"28,5%","polaridade":"menor", "quadrimestres":{"1":"28,5%","2":"17,18%","3":"22,34%"}},
-                    {"id":46,"title":"Reduzir os óbitos nas internações por infarto agudo do miocárdio (IAM) de 7,04% em 2020 para 4,99 em 2025.","esperado":"6%","resultado":"3,29%","resultado_2022":"3,84%","polaridade":"menor", "quadrimestres":{"1":"3,84%","2":"2,94%","3":"3,29%"}},
-                    {"id":47,"title":"Ampliar o número de pessoas assistidas em hospitais quando acidentadas de 48,78% em 2020 para 60% até 2025.","esperado":"53%","resultado":"39,8%","resultado_2022":"45,8%","polaridade":"maior", "quadrimestres":{"1":"45,8%","2":"55%","3":"39,8%"}},
-                    {"id":48,"title":"Reduzir o tempo resposta de 21 minutos em 2019 para 15 minutos em 2025.","esperado":"18'","resultado":"20'55''","resultado_2022":"19'","polaridade":"menor", "quadrimestres":{"1":"18'","2":"19'","3":"20'55''"}},
-                    {"id":51,"title":"Aumentar o número de procedimentos ambulatoriais de média complexidade para a população residente de 1% em 2021 para 2% em 2025.","esperado":"1,50%","resultado":"2,48%","resultado_2022":"1,15%","polaridade":"maior", "quadrimestres":{"1":"0,81%","2":"1,57%","3":"2,48%"}},
-                    {"id":52,"title":"Aumentar os procedimentos de reabilitação executados, em 2021, em 50%, até 2025.","esperado":"12,50%","resultado":"-17,04%","resultado_2022":"19,5%","polaridade":"maior", "quadrimestres":{"1":"-24,45%","2":"-2,26%","3":"-17,04%"}},
-                    {"id":53,"title":"Informatizar 100% dos processos de trabalho das unidades assistenciais e administrativas do hospital até 2022.","esperado":"75%","resultado":"100%","resultado_2022":"21,2%","polaridade":"maior", "quadrimestres":{"1":"21,2%","2":"51,5%","3":"100%"}},
-                    {"id":54,"title":"100% do protocolos implantados nas unidades assistenciais (clínica médica, cirúrgica, gineco obstétrica, pediátrica, UTI e UCI, urgência e emergência ) até 2025.","esperado":"60%","resultado":"NA","resultado_2022":"0","polaridade":"maior", "quadrimestres":{"1":"0","2":"0","3":"NA"}},
-                    {"id":55,"title":"Alcançar a taxa de ocupação do leito hospitalar em 85% até 2025.","esperado":"78%","resultado":"81%","resultado_2022":"89,9%","polaridade":"maior", "quadrimestres":{"1":"89,9%","2":"86,84%","3":"81%"}},
-                    {"id":56,"title":"Redução da taxa de mortalidade hospitalar para 3,50 até 2025.","esperado":"4,2%","resultado":"2,8%","resultado_2022":"3,65%","polaridade":"menor", "quadrimestres":{"1":"3,65%","2":"3,57%","3":"2,8%"}},
-                    {"id":57,"title":"Redução da taxa de infecção geral para 5% até 2025.","esperado":"10%","resultado":"1,4%","resultado_2022":"3,91%","polaridade":"menor", "quadrimestres":{"1":"3,91%","2":"4,39%","3":"1,4%"}},
-                    {"id":58,"title":"Reduzir para 4 dias o tempo médio de internação hospitalar até 2025 com exceção da obstetrícia, psiquiatria ou internação prolongada.","esperado":"4,2","resultado":"6","resultado_2022":"7","polaridade":"menor", "quadrimestres":{"1":"7","2":"5","3":"6"}},
-                    {"id":59,"title":"Atingir 70% dos dos servidores treinados com carga horária de 30h por ano até 2025.","esperado":"60%","resultado":"22,86%","resultado_2022":"28,1%","polaridade":"maior", "quadrimestres":{"1":"28,1%","2":"NA","3":"22,86%"}},
-                    {"id":60,"title":"Reduzir evento sentinela em zero, até 2025.","esperado":"7","resultado":"0","resultado_2022":"0","polaridade":"menor", "quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":61,"title":"Alcançar 85% de satisfação do usuário até o final de 2025.","esperado":"75%","resultado":"NA","resultado_2022":"0","polaridade":"maior", "quadrimestres":{"1":"0","2":"0","3":"NA"}}
-                ]
-            },
-            "Diretriz 3: Fortalecimento das ações stratégicas de vigilância em Saúde.":{
-                "Objetivo 3.1: Fortalecer as ações de vigilância para o controle das doenças e agravos transmissíveis e não transmissiveis, e promoção da saúde, desenvolvendo ações de vigilância sanitária de interesse à saúde e implementando ações de prevenção e detecção e tratamento de IST'S, Hepatites Virais.":[
-                    {"id":62,"title":"Reduzir a incidencia de AIDS em menores de 5 anos em 0 até 2025.","esperado":"0","resultado":"1","resultado_2022":"1","polaridade":"menor","quadrimestres":{"1":"1","2":"1","3":"1"}},
-                    {"id":63,"title":"Ampliar a proporção de analises realizadas em amostras de água para consumo humano.","esperado":"100%","resultado":"79,14%","resultado_2022":"16,8%","polaridade":"maior","quadrimestres":{"1":"128,5%","2":"29,68%","3":"79,14%"}},
-                    {"id":64,"title":"Realizar exames Anti-HIV dos casos novos de tuberculose em 100% até 2025.","esperado":"100%","resultado":"97,8%","resultado_2022":"100%","polaridade":"maior","quadrimestres":{"1":"100%","2":"98,3%","3":"97,8%"}},
-                    {"id":65,"title":"Aumentar a proporção de registro de óbitos com causa básica definida em 98% até 2025.","esperado":"97,5%","resultado":"97,8%","resultado_2022":"97,7%","polaridade":"maior","quadrimestres":{"1":"97,7%","2":"97,5%","3":"97,8%"}},
-                    {"id":66,"title":"Alcançar 100% das vacinas selecionadas com cobertura vacinal de 95% de Crianças menores de 1 ano de idade.","esperado":"95%","resultado":"0%","resultado_2022":"0%","polaridade":"maior","quadrimestres":{"1":"0%","2":"0%","3":"0%"}},
-                    {"id":67,"title":"Aumentar o percentual dos contatos examinados dos casos novos de hanseniase, nos anos das coortes de 76,70% em 2020 para 85% até 2025.","esperado":"85%","resultado":"78,40%","resultado_2022":"77,6%","polaridade":"maior","quadrimestres":{"1":"77,6%","2":"78,3%","3":"78,40%"}},
-                    {"id":68,"title":"Percentual de unidades de saúde com ações de promoção da saúde, prevenção e assistência aos pacientes de hepatites virais de 67% em 2020 para 75% em 2025.","esperado":"75%","resultado":"69%","resultado_2022":"80%","polaridade":"maior","quadrimestres":{"1":"80%","2":"87%","3":"69%"}},
-                    {"id":69,"title":"Encerrar 90% ou mais das doenças compulsórias imediatas registradas no Sinan, em até 60 dias a partir da data de notificação.","esperado":"90%","resultado":"71,97%","resultado_2022":"100%","polaridade":"maior","quadrimestres":{"1":"100%","2":"78,05%","3":"71,97%"}},
-                    {"id":70,"title":"Realizar no mínimo seis grupos de ações de Vigilância Sanitária em 100% até 2025.","esperado":"100%","resultado":"100%","resultado_2022":"100%","polaridade":"maior","quadrimestres":{"1":"100%","2":"100%","3":"100%"}},
-                    {"id":71,"title":"Manter número de casos autóctones de malária 0 em 2020 para 0 até 2025.","esperado":"0","resultado":"0","resultado_2022":"0","polaridade":"menor","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":72,"title":"Ampliar o número de Unidades de Saúde com serviço de notificação contínua da violência doméstica, sexual e outras violências de 18 em 2020 para 33 até 2025.","esperado":"26","resultado":"26","resultado_2022":"26","polaridade":"maior","quadrimestres":{"1":"26","2":"26","3":"26"}},
-                    {"id":73,"title":"Manter o número absoluto de óbito por dengue em 0 até 2025.","esperado":"0","resultado":"0","resultado_2022":"0","polaridade":"menor","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":74,"title":"Manter investigação dos Obitos Maternos em 100% até 2025.","esperado":"100%","resultado":"100%","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"100%","3":"100%"}},
-                    {"id":75,"title":"Aumentar as investigações dos Óbitos de mulheres em Idade fértil (10 a 49 anos MIF) de 78,30% em 2020 para 90% até 2025.","esperado":"82%","resultado":"96,25%","resultado_2022":"100%","polaridade":"maior","quadrimestres":{"1":"100%","2":"84,8%","3":"96,25%"}},
-                    {"id":76,"title":"Ampliar ações de vigilância em saúde do trabalhador de 1 ação ao ano em 2020 para 5 ações ao ano até 2025.","esperado":"3","resultado":"4","resultado_2022":"4","polaridade":"maior","quadrimestres":{"1":"4","2":"4","3":"4"}},
-                    {"id":77,"title":"Realizar 4 ciclos de visita domiciliar, dos 6 preconizados, com minimo de 80% de cobertura de imóveis visitados para controle vetorial da dengue.","esperado":"4","resultado":"0","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}}
-                ]
-            },
-            "Diretriz 4: Fortalezer a gestão do SUS, com aprimoramento da gestão da informação e valorização da educação permanente em saúde.":{
-                "Objetivo 4.1: Implementar Ações para Valorização e Qualificação dos Servidores, aprimorando os processos de planejamento, monitoramento, controle, licenças e habilitações.":[
-                    {"id":78,"title":"Implantar a gestão de centros de custos na rede de saúde SUS em 100% até 2025.","esperado":"51,72%","resultado":"7,50%","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"7,50%","3":"7,50%"}},
-                    {"id":79,"title":"100% dos serviços realizando Ações de Educação Permanente até 2025.","esperado":"60%","resultado":"93%","resultado_2022":"55%","polaridade":"maior","quadrimestres":{"1":"55%","2":"76%","3":"93%"}},
-                    {"id":80,"title":"Alcançar 100% dos novos trabalhadores concursados e contratados, com capacitação introdutória, antes de ingressarem nos serviços.","esperado":"80%","resultado":"93%","resultado_2022":"80%","polaridade":"maior","quadrimestres":{"1":"80%","2":"93%","3":"93%"}},
-                    {"id":81,"title":"Alcançar 75% dos profissionais de saúde com ações de qualidade de vida e saúde do trabalhador.","esperado":"40%","resultado":"75,25%","resultado_2022":"28%","polaridade":"maior","quadrimestres":{"1":"28%","2":"28,7%","3":"75,25%"}},
-                    {"id":82,"title":"Alcançar 75% dos serviços de saúde com a implantação dos GTH com plano de trabalho.","esperado":"40%","resultado":"11%","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"Não Mensurado","3":"11%"}},
-                    {"id":83,"title":"Criar 01 projeto anualmente de articulação de talentos na SEMSA nas áreas (arte/cultura e produção científica), até 2025.","esperado":"1","resultado":"1","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"Não Mensurado","3":"1"}},
-                    {"id":84,"title":"Alcançar 90% de habilitação dos serviços ofertados até 2025.","esperado":"80%","resultado":"40%","resultado_2022":"40%","polaridade":"maior","quadrimestres":{"1":"40%","2":"40%","3":"40%"}},
-                    {"id":85,"title":"Alcançar 40% de imóveis registrados até 2025.","esperado":"25%","resultado":"33,3%","resultado_2022":"33%","polaridade":"maior","quadrimestres":{"1":"33%","2":"33,3%","3":"33,3%"}},
-                    {"id":86,"title":"Alcançar 50% de imóveis com Licença de Operação Ambiental até 2025.","esperado":"30%","resultado":"3,44%","resultado_2022":"3,4%","polaridade":"maior","quadrimestres":{"1":"3,4%","2":"3,44%","3":"3,44%"}},
-                    {"id":87,"title":"Alcançar 50% de habite-se dos prédios públicos até 2025.","esperado":"25%","resultado":"6,88%","resultado_2022":"6,9%","polaridade":"maior","quadrimestres":{"1":"6,9%","2":"15,88%","3":"6,88%"}}
-                ]
-            },
-            "Diretriz 5: Ampliação dos Investimentos em Saúde.":{
-                "Objetivo 5.1: Construir, ampliar e equipar as unidades de saúde.":[
-                    {"id":88,"title":"Ampliar a estrutura física de 07 unidades básicas de saúde até 2025.","esperado":"2","resultado":"1","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"2","3":"1"}},
-                    {"id":89,"title":"Construir 06 unidades básicas de saúde até 2025.","esperado":"1","resultado":"0","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":90,"title":"Equipar as unidades de saúde que foram ampliadas e construidas, em 100% até 2025.","esperado":"100%","resultado":"0","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":91,"title":"Construir 01 de Central de Imunização até 2025.","esperado":"0","resultado":"NA","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"NA"}},
-                    {"id":92,"title":"Construir 01 Centro de Zoonoses até 2025.","esperado":"60%","resultado":"NA","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"NA"}},
-                    {"id":93,"title":"Construir 02 Centros de Atenção Psicossocial até 2025 (Caps II caps i).","esperado":"1","resultado":"NA","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"NA"}},
-                    {"id":94,"title":"Construir 02 base descentralizada do SAMU até 2025.","esperado":"1","resultado":"NA","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"NA"}},
-                    {"id":95,"title":"Construir 01 Centro de Reabilitação tipo IV com oficina ortopédica até 2025.","esperado":"0","resultado":"NA","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"NA"}},
-                    {"id":96,"title":"Ampliar estrutura fisica do Pronto Socorro até 20025.","esperado":"0","resultado":"60%","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"60%"}},
-                    {"id":97,"title":"Construir 01 heliponto até 2025.","esperado":"0","resultado":"NA","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"NA"}}
-                ]
-            }
-        },
-        "2024": {
-            "Diretriz 1: Fortalecimento da Atenção Primária à Saúde e aprimoramento das Redes de Atenção à Saúde ampliando o acesso com qualidade e eficiência.": {
-                "Objetivo 1.1: Aprimorar e fortalecer as ações e políticas estratégicas de saúde na atenção primária concomitante as redes de atenção em saúde, com o escopo de focar na promoção e prevenção da saúde.": [
-                    {"id":1, "title":"Aumentar a Cobertura de Agentes Comunitários de Saúde de 67,09% em 2020 para 80,00% em 2025.", "esperado":"80%", "resultado":"72,73%", "resultado_2023":"81,47%", "polaridade": "maior", "quadrimestres": {"1": "73,85%", "2": "75,14%", "3": "72,73%"}},
-                    {"id":2, "title":"Realizar ações assistenciais básicas complementares para a população indigena 03 vezes ao ano.","esperado":"3", "resultado":"3", "resultado_2023":"4", "polaridade": "maior", "quadrimestres": {"1": "0", "2": "2", "3": "3"}},
-                    {"id":3, "title":"Implantar assistência oftalmológica como ação integrante do Programa Saúde na Escola de 0% em 2020 para 100% das escolas pactauadas em 2025.","esperado":"75%", "resultado":"48,64%", "resultado_2023":"39%", "polaridade": "maior", "quadrimestres": {"1": "43,24%", "2": "48,64%", "3": "48,64%"}},
-                    {"id":4, "title":"Aumentar a cobertura de acompanhamento das condicionalidades de saúde do Programa Auxilio Brasil (Programa Bolsa Família - BPF) de 60,94% em 2019 para 80% em 2025.","esperado":"75%", "resultado":"72,56%", "resultado_2023":"71,56%", "polaridade": "maior", "quadrimestres": {"1": "54,24%", "2": "72,04%", "3": "72,56%"}},
-                    {"id":5, "title":"Aumentar a cobertura populacional estimada pela estratégia Saúde da Família de 62,95 em 2020 para 80,00 em 2025.","esperado":"75%", "resultado":"82,37%", "resultado_2023":"73,85%", "polaridade": "maior", "quadrimestres": {"1": "89,65%", "2": "74,48%", "3": "82,37%"}},
-                    {"id":6, "title":"Ampliar a cobertura populacional estimada pelas equipes de Atenção Básica de 78,93% em 2020 para 92,00% em 2025.","esperado":"85%", "resultado":"97,47%", "resultado_2023":"95,97%", "polaridade": "maior", "quadrimestres": {"1": "97,47%", "2": "97,66%", "3": "97,47%"}},
-                    {"id":7, "title":"Ampliar a assistência ofertada por equipe multiprofissional e interdisciplinar na APS de 59,00 em 2019 para 64,00 em 2025.","esperado":"19,5", "resultado":"36,7", "resultado_2023":"15,9", "polaridade": "maior", "quadrimestres": {"1": "12,62", "2": "12,05", "3": "36,7"}},
-                    {"id":8, "title":"Ampliar oferta de exames laboratoriais para as unidades Básicas de saúde de de 30% em 2020 para 50% em 2025.","esperado":"45%", "resultado":"15,18%", "resultado_2023":"51%", "polaridade": "maior", "quadrimestres": {"1": "10,12%", "2": "5,97%", "3": "15,18%"}},
-                    {"id":9, "title":"Reduzir em 10% o quantitativo de crianças integrantes no programa APLV até 2025.","esperado":"7,5%","resultado":"63%","resultado_2023":"36,04%","polaridade":"menor", "quadrimestres": {"1": "0%", "2": "53%", "3": "63%"}},
-                    {"id":10,"title":"Reduzir a tendência da gravidez de adolescentes de 10 a 19 anos de 15,30% em 2020 para 14,50% em 2025.","esperado":"14,6%","resultado":"12,83%","resultado_2023":"14,26%","polaridade":"menor","quadrimestres":{"1":"14,95%","2":"14,57%","3":"12,83%"}},
-                    {"id":11,"title":"Aumentar a cobertura da vacina Poliomielite inativada e da Pentavalente de 36% em 2020 para 95% em 2025.","esperado":"95%","resultado":"70,01%","resultado_2023":"60%","polaridade":"maior","quadrimestres":{"1":"60%","2":"61%","3":"70,01%"}},
-                    {"id":12,"title":"Ampliar o percentual de diabéticos com solicitação hemoglobina glicada de 11% em 2020 para 90% em 2025.","esperado":"80%","resultado":"26,49%","resultado_2023":"31%","polaridade":"maior","quadrimestres":{"1":"32%","2":"23%","3":"26,49%"}},
-                    {"id":13,"title":"Aumentar a proporção de gestantes com pelo menos 06 (seis) consultas pré natal, sendo a primeira até a 20ª semana de gestação de 38% em 2020 para 80% em 2025.","esperado":"72%","resultado":"45,99%","resultado_2023":"42%","polaridade":"maior","quadrimestres":{"1":"44%","2":"51%","3":"45,99%"}},
-                    {"id":14,"title":"Aumentar a proporção de gestantes com realização de exames para siflis e HIV de 67% em 2020 para 95% em 2025.","esperado":"85%","resultado":"73,73%","resultado_2023":"67%","polaridade":"maior","quadrimestres":{"1":"71%","2":"69%","3":"73,73%"}},
-                    {"id":15,"title":"Aumentar o percentual de pessoas hipertensas com pressão arterial aferida em cada semestre de 14% em 2020 para 90% em 2025.","esperado":"80%","resultado":"60,47%","resultado_2023":"25%","polaridade":"maior","quadrimestres":{"1":"27%","2":"24%","3":"60,47%"}},
-                    {"id":16,"title":"Aumentar a proporção de gestantes com atendimento odontológico de 22% em 2020 para 90% em 2025.","esperado":"80%","resultado":"68,91%","resultado_2023":"59%","polaridade":"maior","quadrimestres":{"1":"63%","2":"70%","3":"68,91%"}},
-                    {"id":17,"title":"Ampliar o acesso a atenção odontológica na atenção básica de 52,17 em 2020 para 80,00% em 2025.","esperado":"75%","resultado":"38,94%","resultado_2023":"65.6%","polaridade":"maior","quadrimestres":{"1":"53,6%","2":"53,00%","3":"38,94%"}},
-                    {"id":18,"title":"Implantar nas Unidade Básicas de Saúde o Prontuário Eletrônico de 61% em 2020 para 100% em 2025.","esperado":"100%","resultado":"100%","resultado_2023":"100%","polaridade":"maior","quadrimestres":{"1":"100%","2":"100%","3":"100%"}},
-                ],
-                "Objetivo 1.2: Implementar a Politica Municipal de Assistência Farmacêutica na rede municipal de saúde.": [
-                    {"id":19,"title":"Implantar o cuidado farmacêutico em 50% das Unidades Básicas de Saúde de zona urbana.","esperado":"30%","resultado":"6,25%","resultado_2023":"4,16%","polaridade":"maior","quadrimestres":{"1":"37,5%","2":"6,25%","3":"6,25%"}},
-                    {"id":20,"title":"Implantar Farmácia Viva no município até 2025.","esperado":"0","resultado":"0","resultado_2023":"NA","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":21,"title":"Implantar fitoterapia em 100% das Unidades Básicas de Saúde até 2025.","esperado":"100%","resultado":"0","resultado_2023":"NA","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":22,"title":"Promover 01 ação ao ano para o uso racional de medicamentos até 2025.","esperado":"1","resultado":"0","resultado_2023":"1","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}}
-                ],
-                "Objetivo 1.3: Promover a integração sistêmica nas redes de atenção à saúde, de ações e serviços de saúde com provisão de atenção contínua, integral, de qualidade, responsável e humanizada.": [
-                    {"id":23,"title":"Reduzir a mortalidade infantil de 12,18 em 2020 para 10 até 2025.","esperado":"10,5","resultado":"16,31","resultado_2023":"13,01","polaridade":"menor","quadrimestres":{"1":"20,39","2":"17,4","3":"16,31"}},
-                    {"id":24,"title":"Reduzir a mortalidade materna de 06 em 2020 para 0 até 2025.","esperado":"0","resultado":"1","resultado_2023":"3","polaridade":"menor","quadrimestres":{"1":"1","2":"4","3":"4"}},
-                    {"id":25,"title":"Aumentar o percentual de parto normal no SUS de 37,90% em 2020 para 60,00% até 2025.","esperado":"51,26%","resultado":"52,86%","resultado_2023":"50,18%","polaridade":"maior","quadrimestres":{"1":"55%","2":"52,37%","3":"52,86%"}},
-                    {"id":26,"title":"Reduzir o número de sífilis congênita de 50 em 2020 para 20 em 2025.","esperado":"15","resultado":"45","resultado_2023":"25","polaridade":"menor","quadrimestres":{"1":"45","2":"32","3":"45"}},
-                    {"id":27,"title":"Reduzir a taxa de natalidade de 21,70% em 2020 para 18,00% até 2025.","esperado":"19%","resultado":"16,01%","resultado_2023":"21,25%","polaridade":"menor","quadrimestres":{"1":"5,49%","2":"13,65%","3":"16,01%"}},
-                    {"id":28,"title":"Reduzir as internações de causas sensiveis a Atenção Básica de 24,16% em 2020 para 21% até 2025.","esperado":"22%","resultado":"19,34%","resultado_2023":"23,46%","polaridade":"menor","quadrimestres":{"1":"16,39%","2":"27,78%","3":"19,34%"}},
-                    {"id":29,"title":"Ampliar de 0,26 em 2019 para 0,42 até 2025 a razão de mulheres na faixa etária de 25 a 64 anos com um exame citopatológico a cada três anos.","esperado":"0,38","resultado":"0,42","resultado_2023":"0,33","polaridade":"maior","quadrimestres":{"1":"0,17","2":"0,36","3":"0,44"}},
-                    {"id":30,"title":"Ampliar de 0,23 em 2020 para 0,35 em 2025 a razão de exames de mamografia de rastreamento realizados em mulheres de 50 a 69 anos.","esperado":"0,28","resultado":"0,32","resultado_2023":"0,31","polaridade":"maior","quadrimestres":{"1":"0,12","2":"0,15","3":"0,32"}},
-                    {"id":31,"title":"Reduzir de 217,47/100.000 hab. em 2020 para 113,51/100.000 até 2025 a taxa de mortalidade prematura (30 a 69 anos) por DCNT.","esperado":"133,6","resultado":"212,89","resultado_2023":"212,89","polaridade":"menor","quadrimestres":{"1":"83,76","2":"166,36","3":"212,89"}},
-                    {"id":32,"title":"Alcançar 50% de pessoas idosas na participação das atividades coletivas/grupais em relação ao número de idosos cadastrados na atenção básica.","esperado":"43%","resultado":"40,7%","resultado_2023":"11,07%","polaridade":"maior","quadrimestres":{"1":"3,49%","2":"40,7%","3":"40,7%"}},
-                    {"id":33,"title":"Alcançar 80% das equipes de eSF e eAP capacitadas em envelhecimento e saúde da pessoa idosa.","esperado":"70%","resultado":"32,7%","resultado_2023":"33,9%","polaridade":"maior","quadrimestres":{"1":"11,3%","2":"32,7%","3":"32,7%"}},
-                    {"id":34,"title":"Reduzir em 3% a taxa de internação de pessoas idosas por fratura de fêmur.","esperado":"2,82%","resultado":"2,67%","resultado_2023":"2,33%","polaridade":"menor","quadrimestres":{"1":"3,08%","2":"2,76%","3":"2,67%"}},
-                    {"id":35,"title":"Alcançar 60% de pessoas idosas com avaliação multidimensional realizada, em relação aos número de idosos cadastrados no e-sus/ab (APS).","esperado":"45%","resultado":"5,36%","resultado_2023":"6,8%","polaridade":"maior","quadrimestres":{"1":"3,26%","2":"7,04%","3":"5,36%"}},
-                    {"id":36,"title":"Ampliar a cobertura do teste de triagem neonatal de 34,97% em 2020 para 80% em 2025 de teste realizado no SUS.","esperado":"60%","resultado":"82,65%","resultado_2023":"62%","polaridade":"maior","quadrimestres":{"1":"0%","2":"88,5%","3":"82,65%"}},
-                    {"id":37,"title":"Implantar 01 serviço de Saúde Especializado em Reabilitação por Meio da Habilitação do CER IV até 2025.","esperado":"0","resultado":"0","resultado_2023":"NA","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":38,"title":"Ampliar a proporção de atendimentos odontológico a pessoa com deficiência de 15,81% em 2020 para 60% ate 2025.","esperado":"50%","resultado":"26,64%","resultado_2023":"91,68%","polaridade":"maior","quadrimestres":{"1":"11,71%","2":"19,76%","3":"26,64%"}},
-                    {"id":39,"title":"Reduzir a proporção de recém-Nascidos com Apgar menor de 7 no 5º minuto na Maternidade Municipal de 1,50% em 2020 para 1% até 2025.","esperado":"1,15%","resultado":"1,63%","resultado_2023":"1,98%","polaridade":"menor","quadrimestres":{"1":"1,98%","2":"1,66%","3":"1,63%"}},
-                    {"id":40,"title":"Implantar 01 de linha de cuidado para atenção ás pessoas com transtorno do espectro (TEA) Autista e suas familias até 2025.","esperado":"0","resultado":"0","resultado_2023":"NA","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":41,"title":"Ampliar em 25% ao ano as ações de matriciamento realizadas pelo Centro de Atenção Psicossocial (CAPS) com equipes de Atenção Primária em Saúde (APS).","esperado":"75%","resultado":"87,5%","resultado_2023":"91%","polaridade":"maior","quadrimestres":{"1":"29,72%","2":"50%","3":"87,5%"}},
-                    {"id":42,"title":"Aumentar em 70% o número de casos notificados de tentativa de suicídio até 2025.","esperado":"117","resultado":"132","resultado_2023":"84","polaridade":"maior","quadrimestres":{"1":"28","2":"46","3":"132"}},
-                    {"id":43,"title":"Reduzir em 50% até 2025, as reinternações de residentes por transtornos mental ocorridas em até 12 meses, após a 1ª internação.","esperado":"8","resultado":"23","resultado_2023":"148","polaridade":"menor","quadrimestres":{"1":"15","2":"3","3":"23"}},
-                    {"id":49,"title":"Reduzir em 12% ao ano a taxa de mortalidade por causas externas na população masculina entre 20 a 59 anos.","esperado":"189,3","resultado":"234","resultado_2023":"203,26","polaridade":"menor","quadrimestres":{"1":"73,92","2":"93,87","3":"234"}},
-                    {"id":50,"title":"Aumentar em 0,10 ao ano a procura pelas consultas médicas na APS/SUS pela população masculina na faixa etária entre 20 a 59 anos.","esperado":"0,66","resultado":"0,36","resultado_2023":"0,36","polaridade":"maior","quadrimestres":{"1":"0,12","2":"0,1","3":"0,36"}}
-                ]
-            },
-            "Diretriz 2: Ampliação e aperfeiçoamento do acesso às ações de média e alta complexidade ambulatorial e hospitalar.":{
-                "Objetivo 2.1: Ampliar e qualificar o acesso aos serviços de saúde de qualidade, em tempo adequado, com ênfase na humanização, equidade e no atendimento das necessidades de saúde da Média e Alta Complexidade Ambulatorial e hospitalar.":[
-                    {"id":44,"title":"Reduzir o tempo de espera para atendimento médico em até 10 minutos para primeiro atendimento de pacientes classificados na triagem como laranja.","esperado":"10","resultado":"14","resultado_2023":"14:16","polaridade":"menor","quadrimestres":{"1":"11","2":"10","3":"14"}},
-                    {"id":45,"title":"Reduzir de 20,54% em 2020 para 18% 2025 os óbitos nas internações por Acidente Vascular Cerebral.","esperado":"19,5%","resultado":"20%","resultado_2023":"22,34%","polaridade":"menor","quadrimestres":{"1":"19,23%","2":"17,7%","3":"20%"}},
-                    {"id":46,"title":"Reduzir os óbitos nas internações por infarto agudo do miocárdio (IAM) de 7,04% em 2020 para 4,99 em 2025.","esperado":"5,5%","resultado":"9%","resultado_2023":"3,29%","polaridade":"menor","quadrimestres":{"1":"3,33%","2":"3,27%","3":"9%"}},
-                    {"id":47,"title":"Ampliar o número de pessoas assistidas em hospitais quando acidentadas de 48,78% em 2020 para 60% até 2025.","esperado":"56%","resultado":"57,7%","resultado_2023":"39,8%","polaridade":"maior","quadrimestres":{"1":"66,6%","2":"53,44%","3":"57,7%"}},
-                    {"id":48,"title":"Reduzir o tempo resposta de 21 minutos em 2019 para 15 minutos em 2025.","esperado":"16'","resultado":"20'","resultado_2023":"20'55''","polaridade":"menor","quadrimestres":{"1":"21'","2":"20'","3":"20'"}},
-                    {"id":51,"title":"Aumentar o número de procedimentos ambulatoriais de média complexidade para a população residente de 1% em 2021 para 2% em 2025.","esperado":"1,75%","resultado":"0,02%","resultado_2023":"2,48%","polaridade":"maior","quadrimestres":{"1":"3,7%","2":"0,88%","3":"0,02%"}},
-                    {"id":52,"title":"Aumentar os procedimentos de reabilitação executados, em 2021, em 50%, até 2025.","esperado":"37,5%","resultado":"0%","resultado_2023":"-17,04%","polaridade":"maior","quadrimestres":{"1":"25%","2":"0%","3":"0%"}},
-                    {"id":53,"title":"Informatizar 100% dos processos de trabalho das unidades assistenciais e administrativas do hospital até 2022.","esperado":"85%","resultado":"100%","resultado_2023":"100%","polaridade":"maior","quadrimestres":{"1":"100%","2":"100%","3":"100%"}},
-                    {"id":54,"title":"100% do protocolos implantados nas unidades assistenciais (clínica médica, cirúrgica, gineco obstétrica, pediátrica, UTI e UCI, urgência e emergência ) até 2025.","esperado":"80%","resultado":"55,2%","resultado_2023":"NA","polaridade":"maior","quadrimestres":{"1":"3,44%","2":"24,1%","3":"55,2%"}},
-                    {"id":55,"title":"Alcançar a taxa de ocupação do leito hospitalar em 85% até 2025.","esperado":"80%","resultado":"86%","resultado_2023":"81%","polaridade":"maior","quadrimestres":{"1":"85%","2":"93%","3":"86%"}},
-                    {"id":56,"title":"Redução da taxa de mortalidade hospitalar para 3,50 até 2025.","esperado":"3,8%","resultado":"3,6%","resultado_2023":"2,8%","polaridade":"menor","quadrimestres":{"1":"3,9%","2":"3,6%","3":"3,6%"}},
-                    {"id":57,"title":"Redução da taxa de infecção geral para 5% até 2025.","esperado":"8%","resultado":"1,27%","resultado_2023":"1,4%","polaridade":"menor","quadrimestres":{"1":"1,3%","2":"1,16%","3":"1,27%"}},
-                    {"id":58,"title":"Reduzir para 4 dias o tempo médio de internação hospitalar até 2025 com exceção da obstetrícia, psiquiatria ou internação prolongada.","esperado":"4,1","resultado":"5","resultado_2023":"6","polaridade":"menor","quadrimestres":{"1":"5","2":"5","3":"5"}},
-                    {"id":59,"title":"Atingir 70% dos dos servidores treinados com carga horária de 30h por ano até 2025.","esperado":"65%","resultado":"30%","resultado_2023":"22,86%","polaridade":"maior","quadrimestres":{"1":"0,15%","2":"5%","3":"30%"}},
-                    {"id":60,"title":"Reduzir evento sentinela em zero, até 2025.","esperado":"4","resultado":"0","resultado_2023":"0","polaridade":"menor","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":61,"title":"Alcançar 85% de satisfação do usuário até o final de 2025.","esperado":"80%","resultado":"76%","resultado_2023":"NA","polaridade":"maior","quadrimestres":{"1":"70%","2":"79%","3":"76%"}}
-                ]
-            },
-            "Diretriz 3: Fortalecimento das ações stratégicas de vigilância em Saúde.":{
-                "Objetivo 3.1: Fortalecer as ações de vigilância para o controle das doenças e agravos transmissíveis e não transmissiveis, e promoção da saúde, desenvolvendo ações de vigilância sanitária de interesse à saúde e implementando ações de prevenção e detecção e tratamento de IST'S, Hepatites Virais.":[
-                    {"id":62,"title":"Reduzir a incidencia de AIDS em menores de 5 anos em 0 até 2025.","esperado":"0","resultado":"0","resultado_2023":"1","polaridade":"menor","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":63,"title":"Ampliar a proporção de analises realizadas em amostras de água para consuma humano.","esperado":"100%","resultado":"120%","resultado_2023":"79,14%","polaridade":"maior","quadrimestres":{"1":"81,06%","2":"120%","3":"120%"}},
-                    {"id":64,"title":"Realizar exames Anti-HIV dos casos novos de tuberculose em 100% até 2025.","esperado":"100%","resultado":"100%","resultado_2023":"97,8%","polaridade":"maior","quadrimestres":{"1":"100%","2":"100%","3":"100%"}},
-                    {"id":65,"title":"Aumentar a proporção de registro de óbitos com causa básica definida em 98% até 2025.","esperado":"98%","resultado":"98,6%","resultado_2023":"97,8%","polaridade":"maior","quadrimestres":{"1":"14,28%","2":"50%","3":"98,6%"}},
-                    {"id":66,"title":"Alcançar 100% das vacinas selecionadas com cobertura vacinal de 95% de Crianças menores de 1 ano de idade.","esperado":"95%","resultado":"0%","resultado_2023":"0%","polaridade":"maior","quadrimestres":{"1":"0%","2":"0%","3":"0%"}},
-                    {"id":67,"title":"Aumentar o percentual dos contatos examinados dos casos novos de hanseniase.","esperado":"85%","resultado":"86,40%","resultado_2023":"78,40%","polaridade":"maior","quadrimestres":{"1":"24,7%","2":"86,87%","3":"86,40%"}},
-                    {"id":68,"title":"Percentual de unidades de saúde com ações de promoção da saúde, prevenção e assistência aos pacientes de hepatites virais de 67% em 2020 para 75% em 2025.","esperado":"80%","resultado":"93%","resultado_2023":"69%","polaridade":"maior","quadrimestres":{"1":"93,1%","2":"75,87%","3":"93%"}},
-                    {"id":69,"title":"Encerrar 90% ou mais das doenças compulsórias imediatas registradas no Sinan, em até 60 dias a partir da data de notificação.","esperado":"90%","resultado":"100%","resultado_2023":"71,97%","polaridade":"maior","quadrimestres":{"1":"100%","2":"100%","3":"100%"}},
-                    {"id":70,"title":"Realizar no mínimo seis grupos de ações de Vigilância Sanitária em 100% até 2025.","esperado":"100%","resultado":"100%","resultado_2023":"100%","polaridade":"maior","quadrimestres":{"1":"100%","2":"100%","3":"100%"}},
-                    {"id":71,"title":"Manter número de casos autóctones de malária 0 em 2020 para 0 até 2025.","esperado":"0","resultado":"18","resultado_2023":"0","polaridade":"menor","quadrimestres":{"1":"6","2":"6","3":"18"}},
-                    {"id":72,"title":"Ampliar o número de Unidades de Saúde com serviço de notificação contínua da violência doméstica, sexual e outras violências de 18 em 2020 para 33 até 2025.","esperado":"30","resultado":"39","resultado_2023":"26","polaridade":"maior","quadrimestres":{"1":"39","2":"100","3":"39"}},
-                    {"id":73,"title":"Manter o número absoluto de óbito por dengue em 0 até 2025.","esperado":"0","resultado":"0","resultado_2023":"0","polaridade":"menor","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":74,"title":"Manter investigação dos Obitos Maternos em 100% até 2025.","esperado":"100%","resultado":"100%","resultado_2023":"100%","polaridade":"maior","quadrimestres":{"1":"100%","2":"100%","3":"100%"}},
-                    {"id":75,"title":"Aumentar as investigações dos Óbitos de mulheres em Idade fértil (10 a 49 anos MIF) de 78,30% em 2020 para 90% até 2025.","esperado":"85%","resultado":"93,9%","resultado_2023":"96,25%","polaridade":"maior","quadrimestres":{"1":"82,85%","2":"92,3%","3":"93,9%"}},
-                    {"id":76,"title":"Ampliar ações de vigilância em saúde do trabalhador de 1 ação ao ano em 2020 para 5 ações ao ano até 2025.","esperado":"4","resultado":"4","resultado_2023":"4","polaridade":"maior","quadrimestres":{"1":"4","2":"4","3":"4"}},
-                    {"id":77,"title":"Realizar 4 ciclos de visita domiciliar, dos 6 preconizados, com minimo de 80% de cobertura de imóveis visitados para controle vetorial da dengue.","esperado":"4","resultado":"0","resultado_2023":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}}
-                ]
-            },
-            "Diretriz 4: Fortalezer a gestão do SUS, com aprimoramento da gestão da informação e valorização da educação permanente em saúde.":{
-                "Objetivo 4.1: Implementar Ações para Valorização e Qualificação dos Servidores, aprimorando os processos de planejamento, monitoramento, controle, licenças e habilitações.":[
-                    {"id":78,"title":"Implantar a gestão de centros de custos na rede de saúde SUS em 100% até 2025.","esperado":"83,21%","resultado":"7,40%","resultado_2023":"7,50%","polaridade":"maior","quadrimestres":{"1":"0%","2":"7,4%","3":"7,40%"}},
-                    {"id":79,"title":"100% dos serviços realizando Ações de Educação Permanente até 2025.","esperado":"80%","resultado":"80%","resultado_2023":"93%","polaridade":"maior","quadrimestres":{"1":"63%","2":"30,9%","3":"80%"}},
-                    {"id":80,"title":"Alcançar 100% dos novos trabalhadores concursados e contratados, com capacitação introdutória, antes de ingressarem nos serviços.","esperado":"90%","resultado":"28%","resultado_2023":"93%","polaridade":"maior","quadrimestres":{"1":"28%","2":"28%","3":"28%"}},
-                    {"id":81,"title":"Alcançar 75% dos profissionais de saúde com ações de qualidade de vida e saúde do trabalhador.","esperado":"50%","resultado":"21,19%","resultado_2023":"75,25%","polaridade":"maior","quadrimestres":{"1":"39,94%","2":"60,69%","3":"21,19%"}},
-                    {"id":82,"title":"Alcançar 75% dos serviços de saúde com a implantação dos GTH com plano de trabalho.","esperado":"50%","resultado":"50%","resultado_2023":"11%","polaridade":"maior","quadrimestres":{"1":"0%","2":"50%","3":"50%"}},
-                    {"id":83,"title":"Criar 01 projeto anualmente de articulação de talentos na SEMSA nas áreas (arte/cultura e produção científica), até 2025.","esperado":"1","resultado":"1","resultado_2023":"1","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"1"}},
-                    {"id":84,"title":"Alcançar 90% de habilitação dos serviços ofertados até 2025.","esperado":"85%","resultado":"40%","resultado_2023":"40%","polaridade":"maior","quadrimestres":{"1":"40%","2":"40%","3":"40%"}},
-                    {"id":85,"title":"Alcançar 40% de imóveis registrados até 2025.","esperado":"35%","resultado":"47,61%","resultado_2023":"33,3%","polaridade":"maior","quadrimestres":{"1":"33,3%","2":"47,6%","3":"47,61%"}},
-                    {"id":86,"title":"Alcançar 50% de imóveis com Licença de Operação Ambiental até 2025.","esperado":"40%","resultado":"0%","resultado_2023":"3,44%","polaridade":"maior","quadrimestres":{"1":"3,3%","2":"3,44%","3":"0%"}},
-                    {"id":87,"title":"Alcançar 50% de habite-se dos prédios públicos até 2025.","esperado":"35%","resultado":"7,7%","resultado_2023":"6,88%","polaridade":"maior","quadrimestres":{"1":"6,88%","2":"6,88%","3":"7,7%"}}
-                ]
-            },
-            "Diretriz 5: Ampliação dos Investimentos em Saúde.":{
-                "Objetivo 5.1: Construir, ampliar e equipar as unidades de saúde.":[
-                    {"id":88,"title":"Ampliar a estrutura física de 07 unidades básicas de saúde até 2025.","esperado":"2","resultado":"0","resultado_2023":"1","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":89,"title":"Construir 06 unidades básicas de saúde até 2025.","esperado":"2","resultado":"1","resultado_2023":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"1","3":"1"}},
-                    {"id":90,"title":"Equipar as unidades de saúde que foram ampliadas e construidas, em 100% até 2025.","esperado":"100%","resultado":"0%","resultado_2023":"0%","polaridade":"maior","quadrimestres":{"1":"0%","2":"0%","3":"0%"}},
-                    {"id":91,"title":"Construir 01 de Central de Imunização até 2025.","esperado":"0","resultado":"0","resultado_2023":"NA","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":92,"title":"Construir 01 Centro de Zoonoses até 2025.","esperado":"0","resultado":"0","resultado_2023":"NA","polaridade":"maior","quadrimestres":{"1":"60%","2":"0","3":"0"}},
-                    {"id":93,"title":"Construir 02 Centros de Atenção Psicossocial até 2025 (Caps II caps i).","esperado":"1","resultado":"0","resultado_2023":"NA","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":94,"title":"Construir 02 base descentralizada do SAMU até 2025.","esperado":"1","resultado":"0","resultado_2023":"NA","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":95,"title":"Construir 01 Centro de Reabilitação tipo IV com oficina ortopédica até 2025.","esperado":"0","resultado":"0","resultado_2023":"NA","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":96,"title":"Ampliar estrutura fisica do Pronto Socorro até 20025.","esperado":"0","resultado":"0","resultado_2023":"60%","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":97,"title":"Construir 01 heliponto até 2025.","esperado":"0","resultado":"0","resultado_2023":"NA","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}}
-          ]
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Monitoramento RAG V.01</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/showdown/dist/showdown.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
-      }
-    };
-
-
-document.addEventListener('DOMContentLoaded', () => {
-    // --- DOM Elements ---
-    const goalsGrid = document.getElementById('goals-grid') as HTMLElement;
-    const searchInput = document.getElementById('search-input') as HTMLInputElement;
-    const yearFilter = document.getElementById('year-filter') as HTMLSelectElement;
-    const diretrizFilter = document.getElementById('diretriz-filter') as HTMLSelectElement;
-    const objetivoFilter = document.getElementById('objetivo-filter') as HTMLSelectElement;
-    const quadrimestreFilter = document.getElementById('quadrimestre-filter') as HTMLSelectElement;
-    const statusFilter = document.getElementById('status-filter') as HTMLSelectElement;
-    const noResults = document.getElementById('no-results') as HTMLElement;
-    const goalsListTitle = document.getElementById('goals-list-title') as HTMLElement;
-    const chartsGrid = document.getElementById('charts-grid') as HTMLElement;
-    const modal = document.getElementById('goal-modal') as HTMLElement;
-    const modalWrapper = document.getElementById('modal-content-wrapper') as HTMLElement;
-
-    // --- State ---
-    let yearCharts: {[year: string]: any} = {}; // Consider a more specific type for Chart instances if possible
-    let activeData: Goal[] = []; 
-    let currentFilteredData: Goal[] = []; 
-    
-    // This function reorganizes the original dataset into a more usable structure.
-    function initializeData() {
-        let allGoals: Goal[] = [];
-        let allDiretrizes = new Set<string>();
-        let allObjetivos = new Set<string>();
-
-        const masterData: { [id: number]: Goal } = {};
-
-        // First, populate the master structure from all years to gather all goals
-        for (const year in dataSets) {
-            for (const diretriz in dataSets[year]) {
-                allDiretrizes.add(diretriz);
-                for (const objetivo in dataSets[year][diretriz]) {
-                    allObjetivos.add(objetivo);
-                    for (const goalData of dataSets[year][diretriz][objetivo]) {
-                        if (!masterData[goalData.id]) {
-                            masterData[goalData.id] = {
-                                id: goalData.id,
-                                title: goalData.title,
-                                polaridade: goalData.polaridade,
-                                diretriz: diretriz,
-                                objetivo: objetivo,
-                                yearly_data: {} 
-                            };
-                        }
-                    }
-                }
-            }
+        main {
+            flex-grow: 1;
         }
-         // Now, populate the yearly data into the master structure
-        for (const year in dataSets) {
-            for (const diretriz in dataSets[year]) {
-                for (const objetivo in dataSets[year][diretriz]) {
-                    for (const goalData of dataSets[year][diretriz][objetivo]) {
-                        if (masterData[goalData.id]) {
-                            masterData[goalData.id].yearly_data[year] = {
-                                esperado: goalData.esperado,
-                                resultado: goalData.resultado,
-                                quadrimestres: goalData.quadrimestres || {} 
-                            };
-                        }
-                    }
-                }
-            }
+        .goal-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
         }
+        .goal-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
         
-        allGoals = Object.values(masterData);
+        .modal-enter { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
 
-         // Add placeholder data for 2025
-        allGoals.forEach(goal => {
-            if (!goal.yearly_data["2025"]) {
-                 const finalYearData = goal.yearly_data["2024"]; 
-                 goal.yearly_data["2025"] = {
-                     esperado: finalYearData?.esperado || "N/A", 
-                     resultado: "S/N",
-                     quadrimestres: { "1": "S/N", "2": "S/N", "3": "S/N" }
-                 };
-            }
-        });
-
-        activeData = allGoals;
+        .ai-content h3 { font-size: 1.125rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e5e7eb; }
+        .ai-content ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
+        .ai-content li { margin-bottom: 0.5rem; }
+        .ai-content table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .ai-content th, .ai-content td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .ai-content th { background-color: #f2f2f2; font-weight: 600; }
         
-        diretrizFilter.innerHTML = '<option value="todas">Todas</option>';
-        [...allDiretrizes].sort().forEach(d => {
-            const option = document.createElement('option');
-            option.value = d;
-            option.textContent = d;
-            option.title = d; 
-            diretrizFilter.appendChild(option);
-        });
+        .year-result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+        }
+        .year-result-grid > div {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-white shadow-md">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                <h1 id="header-title" class="text-2xl font-bold text-gray-800">Painel de Monitoramento RAG V.01</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                 <span class="text-sm text-gray-500">Instrumento de Gestão do SUS</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto p-6">
         
-        updateObjetivoFilter();
-    }
-
-    function updateObjetivoFilter() {
-        const selectedDiretriz = diretrizFilter.value;
-        const objetivosOfDiretriz = new Set<string>();
-
-        activeData.forEach(goal => {
-            if (selectedDiretriz === 'todas' || goal.diretriz === selectedDiretriz) {
-                objetivosOfDiretriz.add(goal.objetivo);
-            }
-        });
-        
-        objetivoFilter.innerHTML = '<option value="todos">Todos</option>';
-        [...objetivosOfDiretriz].sort().forEach(o => {
-            const option = document.createElement('option');
-            option.value = o;
-            option.textContent = o;
-            option.title = o; 
-            objetivoFilter.appendChild(option);
-        });
-    }
-
-    function parseValue(value: string | number | undefined | null): number {
-        if (value === undefined || value === null) return NaN;
-        const strValue = String(value);
-        if (strValue.toLowerCase() === 'na' || strValue.trim() === '' || strValue.toLowerCase().includes('andamento') || strValue.toLowerCase().includes('apurando') || strValue.toLowerCase().includes('mensurado') || strValue.toLowerCase() === 's/n') return NaN;
-        const cleanedValue = strValue.replace('%', '').replace(',', '.').replace("'", "").trim();
-        const numericValue = parseFloat(cleanedValue);
-        return numericValue; // parseFloat itself returns NaN if parsing fails
-    }
-
-
-    function getStatus(goal: Goal, result: string | number | undefined, expected: string | number | undefined) {
-        const resultadoVal = String(result).toLowerCase(); 
-        if (result === undefined || result === null || resultadoVal.includes('andamento') || resultadoVal.includes('apurando') || resultadoVal === 's/n' || resultadoVal === 'na' || resultadoVal.includes('mensurado')) {
-             return { text: "Em Andamento", color: "yellow"};
-        }
-        const esperadoNum = parseValue(expected);
-        const resultadoNum = parseValue(result);
-
-        if (isNaN(esperadoNum) || isNaN(resultadoNum)) {
-             return { text: "Não Aplicável", color: "gray"};
-        }
-        
-        const polaridade = goal.polaridade.toUpperCase();
-
-        if (polaridade === 'MENOR') {
-            if (resultadoNum < esperadoNum) return { text: "Superada", color: "green" };
-            if (resultadoNum === esperadoNum) return { text: "Alcançada", color: "green"}; // Changed to green
-            return { text: "Não Alcançada", color: "red" };
-        } else { // Default to MAIOR
-             if (resultadoNum > esperadoNum) return { text: "Superada", color: "green"};
-             if (resultadoNum >= esperadoNum) return { text: "Alcançada", color: "green"}; // Changed to green
-             if (resultadoNum >= esperadoNum * 0.9) return { text: "Parcialmente Alcançada", color: "orange"};
-             return { text: "Não Alcançada", color: "red"};
-        }
-    }
-    
-    function getSimplifiedStatus(detailedStatusText: string) {
-        switch(detailedStatusText) {
-            case 'Superada':
-            case 'Alcançada':
-                return 'Alcançada';
-            case 'Parcialmente Alcançada':
-            case 'Não Alcançada':
-                return 'Não Alcançada';
-            default:
-                return 'Outro'; 
-        }
-    }
-
-    function showLoading(container: HTMLElement, message: string) { container.innerHTML = `<div class="flex items-center justify-center p-8"><svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="text-lg text-gray-600">${message}</span></div>`; }
-    function showError(container: HTMLElement, error: Error) { console.error("Error AI:", error); container.innerHTML = `<div class="p-4 bg-red-100 text-red-700 rounded"><strong>Erro:</strong><p>${error.message || 'Falha ao contatar a API.'}</p></div>`; }
-    
-    function renderAllYearCharts(baseFilteredData: Goal[]) {
-        const years = ["2022", "2023", "2024"];
-        chartsGrid.innerHTML = ''; 
-        const selectedQuad = quadrimestreFilter.value;
-        const selectedStatusFilter = statusFilter.value;
-
-        years.forEach(year => {
-            const chartContainer = document.createElement('div');
-            chartContainer.className = 'w-full h-80 flex flex-col items-center';
-            chartContainer.innerHTML = `
-                <h4 class="text-lg font-semibold text-gray-700 mb-2" id="chart-label-${year}">Resumo ${year}</h4>
-                <div class="relative w-full h-full">
-                    <canvas id="summaryChart${year}" role="img" aria-labelledby="chart-label-${year}"></canvas>
-                </div>
-            `;
-            chartsGrid.appendChild(chartContainer);
-
-            let filteredForChart = baseFilteredData;
-             if (selectedStatusFilter !== 'todos') {
-                filteredForChart = baseFilteredData.filter(goal => {
-                    const yearData = goal.yearly_data[year];
-                    if (!yearData) return false;
-                    
-                    let resultForStatusCheck: string | number | undefined = selectedQuad === 'anual' ? yearData.resultado : (yearData.quadrimestres ? yearData.quadrimestres[selectedQuad as keyof QuadrimestreData] : yearData.resultado);
-                    if (resultForStatusCheck === undefined && selectedQuad !== 'anual') resultForStatusCheck = yearData.resultado;
-
-                    const simplifiedStatus = getSimplifiedStatus(getStatus(goal, resultForStatusCheck, yearData.esperado).text);
-                    return simplifiedStatus === selectedStatusFilter;
-                });
-            }
-            
-            const statusCounts = { 'Alcançada': 0, 'Não Alcançada': 0, 'Outro': 0 };
-            filteredForChart.forEach(goal => {
-                const yearData = goal.yearly_data[year];
-                if (!yearData) return;
-
-                let result: string | number | undefined = selectedQuad === 'anual' ? yearData.resultado : (yearData.quadrimestres ? yearData.quadrimestres[selectedQuad as keyof QuadrimestreData] : yearData.resultado);
-                if (result === undefined && selectedQuad !== 'anual') result = yearData.resultado; 
-
-                let expected = yearData.esperado;
-                const simplifiedStatus = getSimplifiedStatus(getStatus(goal, result, expected).text);
-                if (statusCounts[simplifiedStatus as keyof typeof statusCounts] !== undefined) {
-                    statusCounts[simplifiedStatus as keyof typeof statusCounts]++;
-                }
-            });
-            
-            const chartData = {
-                labels: ['Alcançada', 'Não Alcançada', 'Outros (Em Andamento/N/A)'],
-                datasets: [{
-                    label: `Metas ${year}`,
-                    data: [statusCounts['Alcançada'], statusCounts['Não Alcançada'], statusCounts['Outro']],
-                    backgroundColor: ['#22C55E', '#EF4444', '#FBBF24'],
-                    borderColor: '#fff',
-                    borderWidth: 2
-                }]
-            };
-
-            const canvasElement = document.getElementById(`summaryChart${year}`) as HTMLCanvasElement | null;
-            if (!canvasElement) return;
-            const ctx = canvasElement.getContext('2d');
-            if (!ctx) return;
-
-            if (yearCharts[year]) { yearCharts[year].destroy(); }
-
-            yearCharts[year] = new Chart(ctx, {
-                type: 'doughnut',
-                data: chartData,
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context: any) {
-                                    let label = context.label || '';
-                                    if (label) { label += ': '; }
-                                    const total = context.chart.data.datasets[0].data.reduce((a: number, b: number) => a + b, 0);
-                                    const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) + '%' : '0%';
-                                    label += `${context.raw} (${percentage})`;
-                                    return label;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        });
-    }
-    
-    function renderGoals(filteredData: Goal[], selectedYear: string) {
-        goalsGrid.innerHTML = '';
-        const selectedQuad = quadrimestreFilter.value;
-        goalsListTitle.textContent = `Detalhamento das Metas - ${selectedYear}${selectedQuad !== 'anual' ? ` (${selectedQuad}º RDQA)` : ' (Anual)'}`;
-
-        if (filteredData.length === 0) {
-            noResults.classList.remove('hidden');
-            return;
-        }
-        noResults.classList.add('hidden');
-
-        filteredData.forEach(goal => {
-            const yearData = goal.yearly_data[selectedYear];
-            if (!yearData) return;
-
-            let displayResult: string | number | undefined = selectedQuad === 'anual' ? yearData.resultado : (yearData.quadrimestres ? yearData.quadrimestres[selectedQuad as keyof QuadrimestreData] : yearData.resultado);
-            if (displayResult === undefined && selectedQuad !== 'anual') displayResult = yearData.resultado; 
-
-            const statusInfo = getStatus(goal, displayResult, yearData.esperado);
-
-            let historyHtml = ['2022', '2023', '2024', '2025'].map(year => {
-                const data = goal.yearly_data[year];
-                if (!data) return `<div class="bg-gray-100 col-span-2"><strong class="font-semibold">${year}:</strong> N/A</div>`;
-                
-                let histResult: string | number | undefined = selectedQuad === 'anual' || year !== selectedYear ? data.resultado : (data.quadrimestres ? data.quadrimestres[selectedQuad as keyof QuadrimestreData] : data.resultado);
-                if (histResult === undefined && selectedQuad !== 'anual' && year === selectedYear) histResult = data.resultado;
-
-                const historyStatus = getStatus(goal, histResult, data.esperado);
-                return `<div class="bg-gray-100"><strong class="font-semibold">${year}:</strong></div><div class="bg-gray-100 text-right"><span class="text-${historyStatus.color}-600 font-semibold">${histResult || 'N/A'}</span> / ${data.esperado || 'N/A'}</div>`;
-            }).join('');
-
-            const card = document.createElement('div');
-            card.className = `goal-card bg-white p-4 rounded-lg shadow-sm border-l-4 border-${statusInfo.color}-500 cursor-pointer flex flex-col`;
-            card.setAttribute('role', 'button');
-            card.setAttribute('tabindex', '0'); 
-            card.setAttribute('aria-label', `Detalhes da Meta ${goal.id}: ${goal.title}`);
-
-            card.innerHTML = `
-                <div class="flex-grow flex flex-col">
-                    <div class="flex justify-between items-start mb-2">
-                         <h3 class="text-base font-semibold text-gray-800">Meta ${goal.id}</h3>
-                        <span class="text-xs font-bold uppercase px-2 py-1 bg-${statusInfo.color}-100 text-${statusInfo.color}-800 rounded-full whitespace-nowrap">${statusInfo.text}</span>
-                    </div>
-                    <p class="text-gray-600 text-sm my-2 flex-grow">${goal.title}</p>
-                    <div class="mt-3 pt-3 border-t">
-                        <h4 class="text-xs font-bold text-gray-500 mb-2 uppercase">Histórico de Resultados (${selectedQuad === 'anual' ? 'Anual' : selectedQuad + 'º RDQA'}) (Resultado / Esperado)</h4>
-                        <div class="year-result-grid">
-                            ${historyHtml}
-                        </div>
+        <!-- Filters -->
+        <div class="bg-white p-4 rounded-lg shadow-sm mb-6 flex flex-col space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <div class="relative w-full">
+                    <input type="text" id="search-input" placeholder="Buscar por ID ou palavra-chave..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
                 </div>
-            `;
-            card.addEventListener('click', () => openGoalModal(goal));
-            card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') openGoalModal(goal); });
-            goalsGrid.appendChild(card);
-        });
-    }
-    
-    function filterAndRender() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const selectedDiretriz = diretrizFilter.value;
-        const selectedObjetivo = objetivoFilter.value;
-        
-        const baseFilteredData = activeData.filter(goal => {
-            const searchMatch = goal.title.toLowerCase().includes(searchTerm) || String(goal.id).includes(searchTerm) || `meta ${goal.id}`.includes(searchTerm);
-            const diretrizMatch = selectedDiretriz === 'todas' || goal.diretriz === selectedDiretriz;
-            const objetivoMatch = selectedObjetivo === 'todos' || goal.objetivo === selectedObjetivo;
-            return searchMatch && diretrizMatch && objetivoMatch;
-        });
-
-        currentFilteredData = baseFilteredData; 
-        renderAllYearCharts(baseFilteredData); 
-        
-        const selectedYearToList = yearFilter.value;
-        renderGoals(baseFilteredData, selectedYearToList);
-    }
-
-    async function callGeminiAPI(promptText: string) {
-        try {
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-preview-04-17',
-                contents: promptText 
-            });
-            const text = response.text;
-
-            if (typeof text === 'string') {
-                return text;
-            } else {
-                console.error("Invalid API response: text is not a string or is missing.", response);
-                throw new Error('Resposta da API inválida ou texto não encontrado.');
-            }
-        } catch (error) {
-            console.error("Gemini API call failed:", error);
-            let errorMessage = 'Falha ao contatar a API Gemini.';
-            if (error instanceof Error && error.message) {
-                errorMessage += ` Detalhes: ${error.message}`;
-            }
-            console.error("Original Gemini API error details:", error);
-            throw new Error(errorMessage);
-        }
-    }
-    
-    async function generateQualitativeAnalysis(goal: Goal, resultForModal: string | number | undefined, statusForModal: {text: string, color: string}, periodText: string, year: string) {
-        const contentContainer = document.getElementById('qualitative-analysis-content') as HTMLElement;
-        const genButton = document.getElementById('generate-analysis-btn') as HTMLButtonElement;
-        genButton.disabled = true;
-        showLoading(contentContainer, "Gerando análise qualitativa...");
-        (document.getElementById('action-plan-container') as HTMLElement).classList.add('hidden'); 
-        const yearData = goal.yearly_data[year];
-
-        const prompt = `
-            Você é um especialista em gestão de saúde pública (SUS) e análise de indicadores do Relatório Anual de Gestão (RAG).
-            Gere uma análise qualitativa concisa e objetiva para a seguinte meta:
-
-            **Meta ID:** ${goal.id}
-            **Título da Meta:** ${goal.title}
-            **Ano de Referência:** ${year}
-            **Período de Análise:** ${periodText}
-            **Diretriz Estratégica:** ${goal.diretriz}
-            **Objetivo Estratégico:** ${goal.objetivo}
-            **Resultado Esperado:** ${yearData.esperado}
-            **Resultado Alcançado:** ${resultForModal}
-            **Status Atual:** ${statusForModal.text}
-            **Polaridade da Meta:** ${goal.polaridade === 'maior' ? 'Quanto maior, melhor' : 'Quanto menor, melhor'}
-
-            **Instruções para a Análise (formato Markdown):**
-
-            1.  **Análise Comparativa do Resultado:**
-                *   Compare brevemente o resultado alcançado com o esperado para o período.
-                *   Destaque se o resultado superou, atingiu, atingiu parcialmente ou não atingiu a meta, e a relevância dessa diferença.
-
-            2.  **Hipóteses e Fatores Contribuintes (2-3 pontos principais):**
-                *   Levante hipóteses concisas sobre os possíveis fatores que influenciaram o resultado (positivo ou negativo).
-                *   Seja específico(a) se possível, considerando o contexto da saúde pública.
-
-            3.  **Sugestões Estratégicas (2-3 ações concretas):**
-                *   Proponha ações claras, realistas e direcionadas para manter/melhorar o resultado ou para reverter um cenário negativo.
-                *   As ações devem ser focadas e de alto impacto.
-
-            Mantenha a linguagem profissional, clara e direta. Evite generalidades excessivas.
-            O resultado deve ser apenas o texto em Markdown.
-        `;
-        try {
-            const text = await callGeminiAPI(prompt);
-            const converter = new showdown.Converter({tables: true, openLinksInNewWindow: true, simplifiedAutoLink: true, strikethrough: true});
-            contentContainer.innerHTML = converter.makeHtml(text);
-            const actionPlanBtn = document.getElementById('generate-action-plan-btn') as HTMLButtonElement;
-            actionPlanBtn.classList.remove('hidden');
-            actionPlanBtn.dataset.analysisText = text; 
-            actionPlanBtn.disabled = false; 
-        } catch (error) { showError(contentContainer, error as Error); } finally { genButton.disabled = false; }
-    }
-    
-    async function generateActionPlan(goal: Goal, analysisText: string) {
-        const contentContainer = document.getElementById('action-plan-content') as HTMLElement;
-        const genButton = document.getElementById('generate-action-plan-btn') as HTMLButtonElement;
-        genButton.disabled = true;
-        (document.getElementById('action-plan-container') as HTMLElement).classList.remove('hidden');
-        showLoading(contentContainer, "Elaborando plano de ação...");
-
-        const prompt = `
-            Com base na meta e na análise qualitativa fornecida, crie um plano de ação detalhado.
-            Apresente o plano em uma tabela Markdown com as seguintes colunas: "Ação Proposta", "Responsável Sugerido (Setor/Área)", "Prazo Sugerido (Ex: Curto, Médio, Longo Prazo ou data específica)", "Recursos Necessários (Principais)".
-
-            **Meta ID:** ${goal.id}
-            **Título da Meta:** ${goal.title}
-
-            **Análise Qualitativa Fornecida:**
-            ---
-            ${analysisText}
-            ---
-
-            **Instruções para o Plano de Ação:**
-            *   As ações devem ser concretas, mensuráveis (se possível), alcançáveis, relevantes e com prazos definidos.
-            *   Derive as ações das "Sugestões Estratégicas" e "Hipóteses/Problemáticas" da análise.
-            *   Seja específico quanto aos responsáveis e recursos, mesmo que genéricos (ex: "Equipe da Atenção Básica", "Recursos Humanos e Materiais de Escritório").
-            *   Formate a resposta exclusivamente como uma tabela Markdown. Não inclua texto introdutório ou conclusivo fora da tabela.
-        `;
-        try {
-            const text = await callGeminiAPI(prompt);
-            const converter = new showdown.Converter({tables: true, openLinksInNewWindow: true, simplifiedAutoLink: true, strikethrough: true});
-            contentContainer.innerHTML = converter.makeHtml(text);
-        } catch (error) { showError(contentContainer, error as Error); } finally { genButton.disabled = false; }
-    }
-
-    async function exportModalContentToPDF(goal: Goal, selectedYear: string, periodText: string) {
-        // @ts-ignore
-        const { jsPDF } = window.jspdf;
-        const modalContentForExport = document.getElementById('ai-export-content');
-        const modalTitleText = `Análise da Meta ${goal.id}: ${goal.title}`;
-        const modalSubtitleText = `RAG ${selectedYear} - ${periodText}`;
-    
-        if (!modalContentForExport) {
-            alert("Conteúdo para exportação não encontrado.");
-            return;
-        }
-    
-        const actionPlanContainer = document.getElementById('action-plan-container') as HTMLElement;
-        const actionPlanWasHidden = actionPlanContainer.classList.contains('hidden');
-        if (actionPlanWasHidden && document.getElementById('action-plan-content')?.innerHTML.trim() !== '') {
-            actionPlanContainer.classList.remove('hidden');
-        }
-    
-        const exportButton = document.getElementById('export-pdf-btn') as HTMLButtonElement;
-        const originalButtonText = exportButton.innerHTML;
-        exportButton.disabled = true;
-        exportButton.innerHTML = 'Gerando PDF... <svg class="animate-spin inline-block ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
-    
-        try {
-            // @ts-ignore
-            const canvas = await html2canvas(modalContentForExport, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                 onclone: (documentClone) => {
-                    const clonedContent = documentClone.getElementById('ai-export-content');
-                    if (clonedContent) {
-                         // Ensure all nested content is visible and styled for capture
-                        const analysisContent = clonedContent.querySelector('#qualitative-analysis-content');
-                        const planContent = clonedContent.querySelector('#action-plan-content');
-                        if (analysisContent) (analysisContent as HTMLElement).style.display = 'block';
-                        if (planContent) (planContent as HTMLElement).style.display = 'block';
-
-                        // Ensure headers are styled correctly in the clone
-                        clonedContent.querySelectorAll('h3').forEach(h => {
-                            (h as HTMLElement).style.color = '#1f2937'; // Example: Ensure text color
-                            (h as HTMLElement).style.fontSize = '1.25rem'; // Tailwind 'text-xl'
-                            (h as HTMLElement).style.fontWeight = '700'; // Tailwind 'font-bold'
-                        });
-                        // You might need to inline more styles if html2canvas doesn't pick them up from external CSS fully
-                    }
-                }
-            });
-    
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF({
-                orientation: 'p',
-                unit: 'mm',
-                format: 'a4'
-            });
-    
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
-            const margin = 15;
-            const contentWidth = pdfWidth - 2 * margin;
-    
-            let currentY = margin;
-            pdf.setFontSize(16);
-            pdf.setTextColor(40, 40, 40);
-            const titleLines = pdf.splitTextToSize(modalTitleText, contentWidth);
-            pdf.text(titleLines, margin, currentY + 5);
-            currentY += titleLines.length * 7 + 5; 
-    
-            pdf.setFontSize(12);
-            pdf.setTextColor(100, 100, 100);
-            const subtitleLines = pdf.splitTextToSize(modalSubtitleText, contentWidth);
-            pdf.text(subtitleLines, margin, currentY);
-            currentY += subtitleLines.length * 5 + 10;
-    
-            const imgProps = pdf.getImageProperties(imgData);
-            const canvasOriginalWidth = imgProps.width;
-            const canvasOriginalHeight = imgProps.height;
-            
-            const imageDisplayWidth = contentWidth;
-            const imageDisplayHeight = (canvasOriginalHeight * imageDisplayWidth) / canvasOriginalWidth;
-    
-            let canvasCutPositionY = 0; // Y-coordinate on the original canvas image
-            let canvasHeightRemaining = canvasOriginalHeight;
-    
-            while (canvasHeightRemaining > 0) {
-                if (currentY > pdfHeight - margin - 10 && canvasHeightRemaining > 0) { // Need at least 10mm for image part
-                    pdf.addPage();
-                    currentY = margin;
-                }
-    
-                // Determine the height of the segment of the canvas to draw on the current PDF page
-                const availablePageHeightForImage = pdfHeight - margin - currentY;
-                // Convert this available PDF page height back to the canvas's original pixel height for slicing
-                let canvasSliceHeight = (availablePageHeightForImage / imageDisplayHeight) * canvasOriginalHeight;
-                canvasSliceHeight = Math.min(canvasSliceHeight, canvasHeightRemaining); // Don't try to slice more than remaining
-                
-                if (canvasSliceHeight <= 0 && canvasHeightRemaining > 0) { // Not enough space, or bad calculation
-                    if (currentY !== margin) pdf.addPage(); // Avoid adding page if already at top of new page
-                    currentY = margin;
-                    // Recalculate slice for a full new page
-                    const fullPageImageHeight = pdfHeight - 2 * margin;
-                    canvasSliceHeight = Math.min( (fullPageImageHeight / imageDisplayHeight) * canvasOriginalHeight, canvasHeightRemaining);
-                }
-
-                const displaySegmentHeight = (canvasSliceHeight * imageDisplayWidth) / canvasOriginalWidth;
-
-                if (displaySegmentHeight > 0) {
-                    pdf.addImage(
-                        imgData, 'PNG',
-                        margin, currentY,
-                        imageDisplayWidth, displaySegmentHeight,
-                        undefined, 'FAST', 0,
-                        // Source image clipping parameters (all in original canvas pixels)
-                        0, // sx (start x on original canvas)
-                        canvasCutPositionY, // sy (start y on original canvas)
-                        canvasOriginalWidth, // sWidth (width of slice from original canvas)
-                        canvasSliceHeight  // sHeight (height of slice from original canvas)
-                    );
-                }
-                currentY += displaySegmentHeight + 2; // Add a small gap after the image segment
-                canvasCutPositionY += canvasSliceHeight;
-                canvasHeightRemaining -= canvasSliceHeight;
-            }
-            pdf.save(`Analise_Meta_${goal.id}_${selectedYear}_${periodText.replace(/º RDQA/g, 'Q').replace(/\s+/g, '_')}.pdf`);
-    
-        } catch (error) {
-            console.error("Error generating PDF:", error);
-            alert("Falha ao gerar o PDF. Verifique o console para mais detalhes.");
-        } finally {
-            if (actionPlanWasHidden) {
-                actionPlanContainer.classList.add('hidden');
-            }
-            exportButton.disabled = false;
-            exportButton.innerHTML = originalButtonText;
-        }
-    }
-    
-    function openGoalModal(goal: Goal) {
-        const selectedYear = yearFilter.value;
-        const period = quadrimestreFilter.value;
-        const periodText = period === 'anual' ? 'Anual' : `${period}º RDQA`;
-        const yearData = goal.yearly_data[selectedYear];
-
-        if (!yearData) {
-            console.warn(`No data found for goal ${goal.id} in year ${selectedYear}`);
-            modalWrapper.innerHTML = `<div class="p-6 text-center text-red-500">Dados não disponíveis para esta meta no ano selecionado.</div> <button id="close-modal" class="absolute top-4 right-4 text-gray-500 text-3xl leading-none hover:text-gray-800">&times;</button>`;
-            modal.classList.remove('hidden');
-            (document.getElementById('close-modal') as HTMLButtonElement).addEventListener('click', () => modal.classList.add('hidden'));
-            return;
-        }
-
-        let resultForModal: string | number | undefined = period === 'anual' ? yearData.resultado : (yearData.quadrimestres ? yearData.quadrimestres[period as keyof QuadrimestreData] : yearData.resultado);
-        if (resultForModal === undefined && period !== 'anual') resultForModal = yearData.resultado; 
-        
-        let statusForModal = getStatus(goal, resultForModal, yearData.esperado);
-
-        // Calculate Variação
-        let variacaoDisplay = "N/A";
-        const esperadoNum = parseValue(yearData.esperado);
-        const resultadoNum = parseValue(resultForModal);
-
-        const isEsperadoPerc = typeof yearData.esperado === 'string' && yearData.esperado.includes('%');
-        // Ensure resultForModal is treated as string for .includes('%') check
-        const stringResultForModal = String(resultForModal);
-        const isResultadoPerc = typeof resultForModal === 'string' && stringResultForModal.includes('%');
-        const isPercentageContext = isEsperadoPerc || isResultadoPerc;
-        
-        if (!isNaN(esperadoNum) && !isNaN(resultadoNum)) {
-            const variacao = resultadoNum - esperadoNum;
-            const isNegative = variacao < 0;
-            const absVariacao = Math.abs(variacao);
-    
-            let formattedAbsVariacao;
-            if (isPercentageContext) {
-                formattedAbsVariacao = absVariacao.toFixed(1); 
-            } else if (Number.isInteger(absVariacao)) {
-                formattedAbsVariacao = absVariacao.toString();
-            } else {
-                formattedAbsVariacao = absVariacao.toFixed(2);
-            }
-            variacaoDisplay = `${isNegative ? '-' : ''}${formattedAbsVariacao}${isPercentageContext ? '%' : ''}`;
-        }
-
-
-        modalWrapper.innerHTML = `
-            <div class="p-6 md:p-8">
-                <div class="flex justify-between items-start mb-4 pb-4 border-b">
-                    <div><h2 class="text-2xl font-bold text-gray-800" id="modal-title-text">Detalhes da Meta ${goal.id}</h2><p class="text-sm text-gray-500">RAG ${selectedYear} - ${periodText}</p></div>
-                    <button id="close-modal" aria-label="Fechar modal" class="text-gray-500 text-3xl leading-none hover:text-gray-800">&times;</button>
+                <div>
+                    <select id="year-filter" aria-label="Ano (para lista)" class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                        <option value="2024" selected>2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                        <option value="2025">2025</option>
+                    </select>
                 </div>
-                <div class="space-y-4">
-                    <p class="text-lg text-gray-700 font-medium">${goal.title}</p>
-                    <div class="text-sm text-gray-600 flex items-center">
-                        ${goal.polaridade === 'maior' ? '<span class="text-green-500 mr-2 text-xl">📈</span> Meta de crescimento' : '<span class="text-red-500 mr-2 text-xl">📉</span> Meta de redução'}
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                        <div class="bg-sky-50 p-4 rounded-lg shadow-sm">
-                            <h5 class="text-sm font-semibold text-sky-700 mb-1">Diretriz</h5>
-                            <p class="text-xs text-sky-600 break-words">${goal.diretriz}</p>
-                        </div>
-                        <div class="bg-emerald-50 p-4 rounded-lg shadow-sm">
-                            <h5 class="text-sm font-semibold text-emerald-700 mb-1">Objetivo</h5>
-                            <p class="text-xs text-emerald-600 break-words">${goal.objetivo}</p>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mt-4">
-                        <div class="bg-gray-50 p-4 rounded-lg shadow-sm flex flex-col justify-between">
-                            <p class="text-3xl font-bold text-gray-700">${yearData.esperado || 'N/A'}</p>
-                            <p class="text-xs text-gray-500 mt-1">Meta Esperada</p>
-                        </div>
-                        <div class="bg-sky-50 p-4 rounded-lg shadow-sm flex flex-col justify-between">
-                            <p class="text-3xl font-bold text-${statusForModal.color}-600">${resultForModal || 'N/A'}</p>
-                            <p class="text-xs text-sky-600 mt-1">Resultado Alcançado</p>
-                        </div>
-                        <div class="bg-purple-50 p-4 rounded-lg shadow-sm flex flex-col justify-between">
-                            <p class="text-3xl font-bold text-purple-600">${variacaoDisplay}</p>
-                            <p class="text-xs text-purple-600 mt-1">Variação</p>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-8 pt-6 border-t">
-                        <div id="ai-export-content">
-                            <div id="qualitative-analysis-container" class="mb-6">
-                                <h3 class="text-xl font-bold text-gray-800 mb-4">Análise Qualitativa com IA ✨</h3>
-                                <div id="qualitative-analysis-content" class="ai-content text-gray-700 leading-relaxed min-h-[5rem]" aria-live="polite"></div>
-                            </div>
-                            <div id="action-plan-container" class="hidden mb-6">
-                                <h3 class="text-xl font-bold text-gray-800 mb-4">Plano de Ação com IA ✨</h3>
-                                <div id="action-plan-content" class="ai-content text-gray-700 leading-relaxed min-h-[5rem]" aria-live="polite"></div>
-                            </div>
-                        </div>
-                        <div class="flex flex-col sm:flex-row gap-4 mt-4">
-                            <button id="generate-analysis-btn" class="w-full sm:w-auto flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">Gerar Análise</button>
-                            <button id="generate-action-plan-btn" class="w-full sm:w-auto flex-1 hidden bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">Elaborar Plano de Ação</button>
-                            <button id="export-pdf-btn" class="w-full sm:w-auto flex-1 bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">Exportar para PDF</button>
-                        </div>
-                    </div>
+                <div>
+                    <select id="status-filter" aria-label="Status (gráficos)" class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                        <option value="todos">Todos</option>
+                        <option value="Alcançada">Alcançada</option>
+                        <option value="Não Alcançada">Não Alcançada</option>
+                        <option value="Outro">Outro (Em Andamento/N/A)</option>
+                    </select>
                 </div>
-            </div>`;
-        modal.classList.remove('hidden');
-        modal.setAttribute('aria-modal', 'true');
-        modal.setAttribute('aria-labelledby', 'modal-title-text');
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                 <div>
+                    <select id="diretriz-filter" aria-label="Diretriz" class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                        <option value="todas">Todas</option>
+                    </select>
+                </div>
+                <div class="lg:col-span-2">
+                    <select id="objetivo-filter" aria-label="Objetivo" class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                        <option value="todos">Todos</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <select id="quadrimestre-filter" aria-label="Período (resultados)" class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="anual" selected>Anual</option>
+                    <option value="1">1º RDQA</option>
+                    <option value="2">2º RDQA</option>
+                    <option value="3">3º RDQA</option>
+                </select>
+            </div>
+        </div>
 
-        const closeModalBtn = document.getElementById('close-modal') as HTMLButtonElement;
-        closeModalBtn.addEventListener('click', () => {
-            modal.classList.add('hidden');
-            modal.removeAttribute('aria-modal');
-            modal.removeAttribute('aria-labelledby');
-        });
-        (document.getElementById('generate-analysis-btn') as HTMLButtonElement).addEventListener('click', () => generateQualitativeAnalysis(goal, resultForModal, statusForModal, periodText, selectedYear));
-        (document.getElementById('generate-action-plan-btn') as HTMLButtonElement).addEventListener('click', (e) => {
-            const analysisText = (e.target as HTMLButtonElement).dataset.analysisText;
-            if (analysisText) {
-                generateActionPlan(goal, analysisText);
-            } else {
-                showError(document.getElementById('action-plan-content') as HTMLElement, { name: "InputError", message: "Análise qualitativa não encontrada. Gere a análise primeiro." });
-            }
-        });
-        (document.getElementById('export-pdf-btn') as HTMLButtonElement).addEventListener('click', () => exportModalContentToPDF(goal, selectedYear, periodText));
-        
-        const escapeListener = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                modal.classList.add('hidden');
-                modal.removeAttribute('aria-modal');
-                modal.removeAttribute('aria-labelledby');
-                document.removeEventListener('keydown', escapeListener); 
-            }
-        };
-        document.addEventListener('keydown', escapeListener);
+        <!-- Chart Section -->
+        <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
+             <h3 id="chart-title" class="text-xl font-semibold text-center mb-4">Resumo Comparativo do Desempenho Anual</h3>
+             <div id="charts-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Year charts will be inserted here -->
+             </div>
+        </div>
 
-        modal.addEventListener('click', (e) => { 
-            if ((e.target as HTMLElement).id === 'goal-modal') {
-                modal.classList.add('hidden');
-                modal.removeAttribute('aria-modal');
-                modal.removeAttribute('aria-labelledby');
-                document.removeEventListener('keydown', escapeListener); 
-            }
-        });
-        closeModalBtn.focus(); 
-    }
-    
-    // --- Initial Load & Event Listeners ---
-    const allFilters = [yearFilter, searchInput, objetivoFilter, quadrimestreFilter, statusFilter];
-    allFilters.forEach(el => el.addEventListener('change', filterAndRender));
-    
-    diretrizFilter.addEventListener('change', () => {
-        updateObjetivoFilter(); 
-        filterAndRender(); 
-    });
+        <!-- Goals Grid -->
+        <h2 id="goals-list-title" class="text-2xl font-bold text-gray-800 mt-8 mb-4">Detalhamento das Metas</h2>
+        <div id="goals-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Goal cards will be inserted here by JavaScript -->
+        </div>
+        <div id="no-results" class="hidden text-center py-10">
+            <p class="text-xl text-gray-500">Nenhum resultado encontrado para os filtros selecionados.</p>
+        </div>
+    </main>
 
-    searchInput.addEventListener('input', filterAndRender); 
-    
-    initializeData();
-    filterAndRender(); 
-});
+    <!-- Modal for Goal Details & AI Analysis -->
+    <div id="goal-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div id="modal-content-wrapper" class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto modal-enter">
+            <!-- Modal content will be dynamically inserted here -->
+        </div>
+    </div>
 
-declare var Chart: any; 
-declare var showdown: any;
-declare var html2canvas: any; // Declare html2canvas
-// @ts-ignore
-declare var jspdf: any; // Declare jspdf global UMD object
+    <footer class="bg-gray-800 text-gray-300 py-4 text-center mt-auto">
+        <p>Todos os direitos reservados © 2025 Frank Sinatra da Silva Muniz</p>
+    </footer>
+
+    <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.5.1",
+    "react/": "https://esm.sh/react@^19.1.0/"
+  }
+}
+</script>
+    <script type="module" src="index.tsx"></script>
+</body>
+</html>
