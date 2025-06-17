@@ -820,18 +820,15 @@ document.addEventListener('DOMContentLoaded', () => {
             filteredForChart.forEach(goal => {
                 const yearData = goal.yearly_data[year];
                 if (!yearData) return;
-
                 let result = selectedQuad === 'anual' ? yearData.resultado : (yearData.quadrimestres ? yearData.quadrimestres[selectedQuad] : yearData.resultado);
                 if (result === undefined && selectedQuad !== 'anual') result = yearData.resultado; 
-
                 let expected = yearData.esperado;
                 const simplifiedStatus = getSimplifiedStatus(getStatus(goal, result, expected).text);
                 if (statusCounts[simplifiedStatus] !== undefined) {
                     statusCounts[simplifiedStatus]++;
                 }
             });
-            
-            const chartData = {
+                        const chartData = {
                 labels: ['Alcançada', 'Não Alcançada', 'Outros (Em Andamento/N/A)'],
                 datasets: [{
                     label: `Metas ${year}`,
@@ -841,14 +838,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     borderWidth: 2
                 }]
             };
-
             const canvasElement = document.getElementById(`summaryChart${year}`);
             if (!canvasElement) return;
             const ctx = canvasElement.getContext('2d');
             if (!ctx) return;
-
             if (yearCharts[year]) { yearCharts[year].destroy(); }
-
             yearCharts[year] = new Chart(ctx, {
                 type: 'doughnut',
                 data: chartData,
@@ -884,33 +878,26 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         noResults.classList.add('hidden');
-
         filteredData.forEach(goal => {
             const yearData = goal.yearly_data[selectedYear];
             if (!yearData) return;
 
             let displayResult = selectedQuad === 'anual' ? yearData.resultado : (yearData.quadrimestres ? yearData.quadrimestres[selectedQuad] : yearData.resultado);
             if (displayResult === undefined && selectedQuad !== 'anual') displayResult = yearData.resultado; 
-
             const statusInfo = getStatus(goal, displayResult, yearData.esperado);
-
             let historyHtml = ['2022', '2023', '2024', '2025'].map(year => {
                 const data = goal.yearly_data[year];
                 if (!data) return `<div class="bg-gray-100 col-span-2"><strong class="font-semibold">${year}:</strong> N/A</div>`;
-                
-                let histResult = selectedQuad === 'anual' || year !== selectedYear ? data.resultado : (data.quadrimestres ? data.quadrimestres[selectedQuad] : data.resultado);
+                                let histResult = selectedQuad === 'anual' || year !== selectedYear ? data.resultado : (data.quadrimestres ? data.quadrimestres[selectedQuad] : data.resultado);
                 if (histResult === undefined && selectedQuad !== 'anual' && year === selectedYear) histResult = data.resultado;
-
                 const historyStatus = getStatus(goal, histResult, data.esperado);
                 return `<div class="bg-gray-100"><strong class="font-semibold">${year}:</strong></div><div class="bg-gray-100 text-right"><span class="text-${historyStatus.color}-600 font-semibold">${histResult || 'N/A'}</span> / ${data.esperado || 'N/A'}</div>`;
             }).join('');
-
             const card = document.createElement('div');
             card.className = `goal-card bg-white p-4 rounded-lg shadow-sm border-l-4 border-${statusInfo.color}-500 cursor-pointer flex flex-col`;
             card.setAttribute('role', 'button');
             card.setAttribute('tabindex', '0'); 
             card.setAttribute('aria-label', `Detalhes da Meta ${goal.id}: ${goal.title}`);
-
             card.innerHTML = `
                 <div class="flex-grow flex flex-col">
                     <div class="flex justify-between items-start mb-2">
@@ -931,8 +918,7 @@ document.addEventListener('DOMContentLoaded', () => {
             goalsGrid.appendChild(card);
         });
     }
-    
-    function filterAndRender() {
+        function filterAndRender() {
         const searchTerm = searchInput.value.toLowerCase();
         const selectedDiretriz = diretrizFilter.value;
         const selectedObjetivo = objetivoFilter.value;
@@ -943,14 +929,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const objetivoMatch = selectedObjetivo === 'todos' || goal.objetivo === selectedObjetivo;
             return searchMatch && diretrizMatch && objetivoMatch;
         });
-
         currentFilteredData = baseFilteredData; 
         renderAllYearCharts(baseFilteredData); 
-        
-        const selectedYearToList = yearFilter.value;
+                const selectedYearToList = yearFilter.value;
         renderGoals(baseFilteredData, selectedYearToList);
     }
-
     async function callGeminiAPI(promptText) {
         try {
             const response = await ai.models.generateContent({
@@ -958,7 +941,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 contents: promptText 
             });
             const text = response.text;
-
             if (typeof text === 'string') {
                 return text;
             } else {
@@ -984,7 +966,6 @@ document.addEventListener('DOMContentLoaded', () => {
         (document.getElementById('action-plan-container')).classList.add('hidden'); 
         (document.getElementById('export-action-plan-csv-btn'))?.classList.add('hidden');
         const yearData = goal.yearly_data[year];
-
         const prompt = `
             Você é um especialista em gestão de saúde pública (SUS) e análise de indicadores do Relatório Anual de Gestão (RAG).
             Gere uma análise qualitativa concisa e objetiva para a seguinte meta:
@@ -999,21 +980,16 @@ document.addEventListener('DOMContentLoaded', () => {
             **Resultado Alcançado:** ${resultForModal}
             **Status Atual:** ${statusForModal.text}
             **Polaridade da Meta:** ${goal.polaridade === 'maior' ? 'Quanto maior, melhor' : 'Quanto menor, melhor'}
-
             **Instruções para a Análise (formato Markdown):**
-
             1.  **Análise Comparativa do Resultado:**
                 *   Compare brevemente o resultado alcançado com o esperado para o período.
                 *   Destaque se o resultado superou, atingiu, atingiu parcialmente ou não atingiu a meta, e a relevância dessa diferença.
-
             2.  **Hipóteses e Fatores Contribuintes (2-3 pontos principais):**
                 *   Levante hipóteses concisas sobre os possíveis fatores que influenciaram o resultado (positivo ou negativo).
                 *   Seja específico(a) se possível, considerando o contexto da saúde pública.
-
             3.  **Sugestões Estratégicas (2-3 ações concretas):**
                 *   Proponha ações claras, realistas e direcionadas para manter/melhorar o resultado ou para reverter um cenário negativo.
                 *   As ações devem ser focadas e de alto impacto.
-
             Mantenha a linguagem profissional, clara e direta. Evite generalidades excessivas.
             O resultado deve ser apenas o texto em Markdown.
         `;
@@ -1027,14 +1003,11 @@ document.addEventListener('DOMContentLoaded', () => {
             actionPlanBtn.disabled = false; 
         } catch (error) { showError(contentContainer, error); } finally { genButton.disabled = false; }
     }
-
     function parseMarkdownTableToCsv(markdownTableText) {
         if (!markdownTableText || typeof markdownTableText !== 'string') return "";
         const lines = markdownTableText.trim().split('\n');
         if (lines.length < 1) return ""; // Need at least a header row
-
         const csvRows = [];
-
         const escapeCsvCell = (cell) => {
             let cleanedCell = cell.trim();
             // If cell contains comma, newline, or double quote, enclose in double quotes
@@ -1043,7 +1016,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return cleanedCell;
         };
-
         let isTableContent = false;
         lines.forEach((line, index) => {
             line = line.trim();
@@ -1092,8 +1064,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Seu navegador não suporta o download automático. Por favor, copie o conteúdo manualmente se necessário.");
         }
     }
-    
-    async function generateActionPlan(goal, analysisText, currentSelectedYear, currentPeriodText) {
+        async function generateActionPlan(goal, analysisText, currentSelectedYear, currentPeriodText) {
         const contentContainer = document.getElementById('action-plan-content');
         const genButton = document.getElementById('generate-action-plan-btn');
         const exportCsvButton = document.getElementById('export-action-plan-csv-btn');
@@ -1106,15 +1077,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const prompt = `
             Com base na meta e na análise qualitativa fornecida, crie um plano de ação detalhado.
             Apresente o plano em uma tabela Markdown com as seguintes colunas: "Ação Proposta", "Responsável Sugerido (Setor/Área)", "Prazo Sugerido (Ex: Curto, Médio, Longo Prazo ou data específica)", "Recursos Necessários (Principais)".
-
             **Meta ID:** ${goal.id}
             **Título da Meta:** ${goal.title}
-
             **Análise Qualitativa Fornecida:**
             ---
             ${analysisText}
             ---
-
             **Instruções para o Plano de Ação:**
             *   As ações devem ser concretas, mensuráveis (se possível), alcançáveis, relevantes e com prazos definidos.
             *   Derive as ações das "Sugestões Estratégicas" e "Hipóteses/Problemáticas" da análise.
@@ -1146,20 +1114,17 @@ document.addEventListener('DOMContentLoaded', () => {
             genButton.disabled = false;
         }
     }
-
     async function exportModalContentToPDF(goal, selectedYear, periodText) {
         // @ts-ignore
         const { jsPDF } = window.jspdf;
         const modalContentForExport = document.getElementById('ai-export-content');
         const modalTitleText = `Análise da Meta ${goal.id}: ${goal.title}`;
         const modalSubtitleText = `RAG ${selectedYear} - ${periodText}`;
-    
-        if (!modalContentForExport) {
+            if (!modalContentForExport) {
             alert("Conteúdo para exportação não encontrado.");
             return;
         }
-    
-        const actionPlanContainer = document.getElementById('action-plan-container');
+            const actionPlanContainer = document.getElementById('action-plan-container');
         const actionPlanContentElement = document.getElementById('action-plan-content');
         const actionPlanWasHidden = actionPlanContainer.classList.contains('hidden');
         
@@ -1172,8 +1137,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const originalButtonText = exportButton.innerHTML;
         exportButton.disabled = true;
         exportButton.innerHTML = 'Gerando PDF... <svg class="animate-spin inline-block ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
-    
-        try {
+            try {
             // @ts-ignore
             const canvas = await html2canvas(modalContentForExport, {
                 scale: 2,
@@ -1195,8 +1159,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         } else if (planContainer) {
                            (planContainer).style.display = 'none'; // Hide if no content
                         }
-
-
                         clonedContent.querySelectorAll('h3').forEach(h => {
                             (h).style.color = '#1f2937'; 
                             (h).style.fontSize = '1.25rem'; 
@@ -1237,20 +1199,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const titleLines = pdf.splitTextToSize(modalTitleText, contentWidth);
             pdf.text(titleLines, margin, currentY + 5);
             currentY += titleLines.length * 7 + 5; 
-    
-            pdf.setFontSize(12);
+                pdf.setFontSize(12);
             pdf.setTextColor(100, 100, 100);
             const subtitleLines = pdf.splitTextToSize(modalSubtitleText, contentWidth);
             pdf.text(subtitleLines, margin, currentY);
             currentY += subtitleLines.length * 5 + 10;
-    
-            const imgProps = pdf.getImageProperties(imgData);
+                const imgProps = pdf.getImageProperties(imgData);
             const canvasOriginalWidth = imgProps.width;
             const canvasOriginalHeight = imgProps.height;
-            
-            const imageDisplayWidth = contentWidth;
+                        const imageDisplayWidth = contentWidth;
             const imageDisplayHeight = (canvasOriginalHeight * imageDisplayWidth) / canvasOriginalWidth;
-    
             let canvasCutPositionY = 0; 
             let canvasHeightRemaining = canvasOriginalHeight;
     
@@ -1259,8 +1217,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     pdf.addPage();
                     currentY = margin;
                 }
-    
-                const availablePageHeightForImage = pdfHeight - margin - currentY;
+                    const availablePageHeightForImage = pdfHeight - margin - currentY;
                 let canvasSliceHeight = (availablePageHeightForImage / imageDisplayHeight) * canvasOriginalHeight;
                 canvasSliceHeight = Math.min(canvasSliceHeight, canvasHeightRemaining); 
                 
@@ -1270,7 +1227,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const fullPageImageHeight = pdfHeight - 2 * margin;
                     canvasSliceHeight = Math.min( (fullPageImageHeight / imageDisplayHeight) * canvasOriginalHeight, canvasHeightRemaining);
                 }
-
                 const displaySegmentHeight = (canvasSliceHeight * imageDisplayWidth) / canvasOriginalWidth;
 
                 if (displaySegmentHeight > 0) {
@@ -1290,8 +1246,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 canvasHeightRemaining -= canvasSliceHeight;
             }
             pdf.save(`Analise_Meta_${goal.id}_${selectedYear}_${periodText.replace(/º RDQA/g, 'Q').replace(/\s+/g, '_')}.pdf`);
-    
-        } catch (error) {
+            } catch (error) {
             console.error("Error generating PDF:", error);
             alert("Falha ao gerar o PDF. Verifique o console para mais detalhes.");
         } finally {
