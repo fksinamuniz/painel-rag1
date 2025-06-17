@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Monitoramento RAG V.01</title>
+    <title>Painel RAG - Análise Plurianual e Detalhada com IA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -14,12 +13,6 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        main {
-            flex-grow: 1;
         }
         .goal-card {
             transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
@@ -32,13 +25,11 @@
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #555; }
-        
-        .modal-enter { animation: fadeIn 0.3s ease-out; }
+                .modal-enter { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.95); }
             to { opacity: 1; transform: scale(1); }
         }
-
         .ai-content h3 { font-size: 1.125rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e5e7eb; }
         .ai-content ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
         .ai-content li { margin-bottom: 0.5rem; }
@@ -59,71 +50,74 @@
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
-
     <!-- Header -->
     <header class="bg-white shadow-md">
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-4">
                 <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                <h1 id="header-title" class="text-2xl font-bold text-gray-800">Painel de Monitoramento RAG V.01</h1>
+                <h1 id="header-title" class="text-2xl font-bold text-gray-800">Painel RAG - Análise Plurianual</h1>
             </div>
-            <div class="flex items-center space-x-4">
-                 <span class="text-sm text-gray-500">Instrumento de Gestão do SUS</span>
-            </div>
+            <span class="text-sm text-gray-500">Instrumento de Gestão do SUS</span>
         </div>
     </header>
 
     <!-- Main Content -->
     <main class="container mx-auto p-6">
-        
-        <!-- Filters -->
+                <!-- Filters -->
         <div class="bg-white p-4 rounded-lg shadow-sm mb-6 flex flex-col space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                  <div class="relative w-full">
-                    <input type="text" id="search-input" placeholder="Buscar por ID ou palavra-chave..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <input type="text" id="search-input" placeholder="Buscar por ID ou palavra-chave..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
                 </div>
-                <div>
-                    <select id="year-filter" aria-label="Ano (para lista)" class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <div class="flex items-center gap-2">
+                    <label for="year-filter" class="font-medium">Ano (para lista):</label>
+                    <select id="year-filter" class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="2024" selected>2024</option>
                         <option value="2023">2023</option>
                         <option value="2022">2022</option>
-                        <option value="2025">2025</option>
                     </select>
                 </div>
-                <div>
-                    <select id="status-filter" aria-label="Status (gráficos)" class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <div class="flex items-center gap-2">
+                    <label for="status-filter" class="font-medium">Status (nos gráficos):</label>
+                    <select id="status-filter" class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="todos">Todos</option>
                         <option value="Alcançada">Alcançada</option>
                         <option value="Não Alcançada">Não Alcançada</option>
-                        <option value="Outro">Outro (Em Andamento/N/A)</option>
                     </select>
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                 <div>
-                    <select id="diretriz-filter" aria-label="Diretriz" class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                        <option value="todas">Todas</option>
+                 <div class="flex items-center gap-2">
+                    <label for="diretriz-filter" class="font-medium">Diretriz:</label>
+                    <select id="diretriz-filter" class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="todas">Todas as Diretrizes</option>
                     </select>
                 </div>
-                <div class="lg:col-span-2">
-                    <select id="objetivo-filter" aria-label="Objetivo" class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                        <option value="todos">Todos</option>
+                <div class="flex items-center gap-2 lg:col-span-2">
+                    <label for="objetivo-filter" class="font-medium">Objetivo:</label>
+                    <select id="objetivo-filter" class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="todos">Todos os Objetivos</option>
                     </select>
                 </div>
             </div>
-            <div>
-                <select id="quadrimestre-filter" aria-label="Período (resultados)" class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                    <option value="anual" selected>Anual</option>
-                    <option value="1">1º RDQA</option>
-                    <option value="2">2º RDQA</option>
-                    <option value="3">3º RDQA</option>
-                </select>
+            <div class="flex flex-col sm:flex-row items-center gap-4">
+                <div class="flex-grow flex items-center gap-2 w-full">
+                    <label for="quadrimestre-filter" class="font-medium">Período:</label>
+                    <select id="quadrimestre-filter" class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="anual" selected>Resultado Anual</option>
+                        <option value="1">1º RDQA</option>
+                        <option value="2">2º RDQA</option>
+                        <option value="3">3º RDQA</option>
+                    </select>
+                </div>
+                <button id="generate-global-analysis-btn" class="w-full sm:w-auto bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-all flex items-center justify-center gap-2">
+                    Análise Geral com IA ✨
+                </button>
             </div>
         </div>
-
         <!-- Chart Section -->
         <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
              <h3 id="chart-title" class="text-xl font-semibold text-center mb-4">Resumo Comparativo do Desempenho Anual</h3>
@@ -131,7 +125,6 @@
                 <!-- Year charts will be inserted here -->
              </div>
         </div>
-
         <!-- Goals Grid -->
         <h2 id="goals-list-title" class="text-2xl font-bold text-gray-800 mt-8 mb-4">Detalhamento das Metas</h2>
         <div id="goals-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -148,97 +141,10 @@
             <!-- Modal content will be dynamically inserted here -->
         </div>
     </div>
-
-    <footer class="bg-gray-800 text-gray-300 py-4 text-center mt-auto">
-        <p>Todos os direitos reservados © 2025 Frank Sinatra da Silva Muniz</p>
-    </footer>
-
-    <script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@^1.5.1",
-    "react/": "https://esm.sh/react@^19.1.0/"
-  }
-}
-</script>
-    <script type="module">
-// Copyright 2024 Google LLC
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-import { GoogleGenAI } from "@google/genai";
-
-// Initialize the GoogleGenAI client with the API key from environment variables
-const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
-
-// --- TYPE DEFINITIONS ---
-/*
-interface QuadrimestreData {
-    "1"?: string | number;
-    "2"?: string | number;
-    "3"?: string | number;
-}
-
-interface YearlyGoalData {
-    esperado: string | number;
-    resultado: string | number;
-    quadrimestres: QuadrimestreData;
-    resultado_2022?: string | number;
-    resultado_2023?: string | number;
-}
-
-interface Goal {
-    id: number;
-    title: string;
-    polaridade: string;
-    diretriz: string;
-    objetivo: string;
-    yearly_data: { [year: string]: YearlyGoalData };
-}
-
-interface RawQuadrimestreData {
-    "1": string | number;
-    "2": string | number;
-    "3": string | number;
-}
-
-interface RawGoalDataItem {
-    id: number;
-    title: string;
-    esperado: string | number;
-    resultado: string | number;
-    polaridade: string;
-    quadrimestres: RawQuadrimestreData;
-    resultado_2022?: string | number;
-    resultado_2023?: string | number;
-}
-
-interface RawObjetivoData {
-    [objetivoTitle: string]: RawGoalDataItem[];
-}
-
-interface RawDiretrizData {
-    [diretrizTitle: string]: RawObjetivoData;
-}
-
-interface RawDataSets {
-    [year: string]: RawDiretrizData;
-}
-*/
-
-// --- FULL DATASET ---
-// Data processed and consolidated from the provided CSV files.
-const dataSets = {
+    <script>
+    // --- FULL DATASET ---
+    // Data processed and consolidated from the provided CSV files.
+    const dataSets = {
       "2022": {
         "Diretriz 1: Fortalecimento da Atenção Primária à Saúde e aprimoramento das Redes de Atenção à Saúde ampliando o acesso com qualidade e eficiência.": {
                 "Objetivo 1.1: Aprimorar e fortalecer as ações e políticas estratégicas de saúde na atenção primária concomitante as redes de atenção em saúde, com o escopo de focar na promoção e prevenção da saúde.": [
@@ -606,826 +512,487 @@ const dataSets = {
                     {"id":96,"title":"Ampliar estrutura fisica do Pronto Socorro até 20025.","esperado":"0","resultado":"0","resultado_2023":"60%","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
                     {"id":97,"title":"Construir 01 heliponto até 2025.","esperado":"0","resultado":"0","resultado_2023":"NA","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}}
           ]
+
         }
       }
     };
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DOM Elements ---
+        const goalsGrid = document.getElementById('goals-grid');
+        const searchInput = document.getElementById('search-input');
+        const yearFilter = document.getElementById('year-filter');
+        const diretrizFilter = document.getElementById('diretriz-filter');
+        const objetivoFilter = document.getElementById('objetivo-filter');
+        const quadrimestreFilter = document.getElementById('quadrimestre-filter');
+        const statusFilter = document.getElementById('status-filter');
+        const noResults = document.getElementById('no-results');
+        const goalsListTitle = document.getElementById('goals-list-title');
+        const chartsGrid = document.getElementById('charts-grid');
+        const globalAnalysisBtn = document.getElementById('generate-global-analysis-btn');
+        const modal = document.getElementById('goal-modal');
+        const modalWrapper = document.getElementById('modal-content-wrapper');
 
 
-document.addEventListener('DOMContentLoaded', () => {
-    // --- DOM Elements ---
-    const goalsGrid = document.getElementById('goals-grid');
-    const searchInput = document.getElementById('search-input');
-    const yearFilter = document.getElementById('year-filter');
-    const diretrizFilter = document.getElementById('diretriz-filter');
-    const objetivoFilter = document.getElementById('objetivo-filter');
-    const quadrimestreFilter = document.getElementById('quadrimestre-filter');
-    const statusFilter = document.getElementById('status-filter');
-    const noResults = document.getElementById('no-results');
-    const goalsListTitle = document.getElementById('goals-list-title');
-    const chartsGrid = document.getElementById('charts-grid');
-    const modal = document.getElementById('goal-modal');
-    const modalWrapper = document.getElementById('modal-content-wrapper');
-
-    // --- State ---
-    let yearCharts = {}; 
-    let activeData = []; 
-    let currentFilteredData = []; 
-    
-    // This function reorganizes the original dataset into a more usable structure.
-    function initializeData() {
-        let allGoals = [];
-        let allDiretrizes = new Set();
-        let allObjetivos = new Set();
-
-        const masterData = {};
-
-        // First, populate the master structure from all years to gather all goals
-        for (const year in dataSets) {
-            for (const diretriz in dataSets[year]) {
-                allDiretrizes.add(diretriz);
-                for (const objetivo in dataSets[year][diretriz]) {
-                    allObjetivos.add(objetivo);
-                    for (const goalData of dataSets[year][diretriz][objetivo]) {
-                        if (!masterData[goalData.id]) {
-                            masterData[goalData.id] = {
-                                id: goalData.id,
-                                title: goalData.title,
-                                polaridade: goalData.polaridade,
-                                diretriz: diretriz,
-                                objetivo: objetivo,
-                                yearly_data: {} 
-                            };
-                        }
-                    }
-                }
-            }
-        }
-         // Now, populate the yearly data into the master structure
-        for (const year in dataSets) {
-            for (const diretriz in dataSets[year]) {
-                for (const objetivo in dataSets[year][diretriz]) {
-                    for (const goalData of dataSets[year][diretriz][objetivo]) {
-                        if (masterData[goalData.id]) {
-                            masterData[goalData.id].yearly_data[year] = {
-                                esperado: goalData.esperado,
-                                resultado: goalData.resultado,
-                                quadrimestres: goalData.quadrimestres || {} 
-                            };
-                            // Add previous year results if available
-                            if (goalData.resultado_2022 && masterData[goalData.id].yearly_data["2022"]) {
-                                // This assumes 'resultado_2022' is on 2023 data, etc.
-                                // It's a bit redundant if 2022 data is already processed but ensures it's there.
-                            }
-                            if (goalData.resultado_2023 && masterData[goalData.id].yearly_data["2023"]) {
-                               // Similar logic
+        // --- State ---
+        let yearCharts = {};
+        let activeData = [];
+        let currentFilteredData = [];
+        
+        // This function reorganizes the original dataset into a more usable structure.
+        function initializeData() {
+            let allGoals = [];
+            let allDiretrizes = new Set();
+            let allObjetivos = new Set();
+            // This new logic correctly restructures the data from the CSVs
+            const masterData = {};
+            // First, populate the master structure from all years to gather all goals
+            for (const year in dataSets) {
+                for (const diretriz in dataSets[year]) {
+                    allDiretrizes.add(diretriz);
+                    for (const objetivo in dataSets[year][diretriz]) {
+                        allObjetivos.add(objetivo);
+                        for (const goalData of dataSets[year][diretriz][objetivo]) {
+                            if (!masterData[goalData.id]) {
+                                masterData[goalData.id] = {
+                                    id: goalData.id,
+                                    title: goalData.title,
+                                    polaridade: goalData.polaridade,
+                                    diretriz: diretriz,
+                                    objetivo: objetivo,
+                                    yearly_data: {}
+                                };
                             }
                         }
                     }
                 }
             }
-        }
-        
-        allGoals = Object.values(masterData);
-
-         // Add placeholder data for 2025
-        allGoals.forEach(goal => {
-            if (!goal.yearly_data["2025"]) {
-                 const finalYearData = goal.yearly_data["2024"] || goal.yearly_data["2023"] || goal.yearly_data["2022"]; 
-                 goal.yearly_data["2025"] = {
-                     esperado: finalYearData?.esperado || "N/A", 
-                     resultado: "S/N",
-                     quadrimestres: { "1": "S/N", "2": "S/N", "3": "S/N" }
-                 };
-            }
-        });
-
-        activeData = allGoals;
-        
-        diretrizFilter.innerHTML = '<option value="todas">Todas</option>';
-        [...allDiretrizes].sort().forEach(d => {
-            const option = document.createElement('option');
-            option.value = d;
-            option.textContent = d;
-            option.title = d; 
-            diretrizFilter.appendChild(option);
-        });
-        
-        updateObjetivoFilter();
-    }
-
-    function updateObjetivoFilter() {
-        const selectedDiretriz = diretrizFilter.value;
-        const objetivosOfDiretriz = new Set();
-
-        activeData.forEach(goal => {
-            if (selectedDiretriz === 'todas' || goal.diretriz === selectedDiretriz) {
-                objetivosOfDiretriz.add(goal.objetivo);
-            }
-        });
-        
-        objetivoFilter.innerHTML = '<option value="todos">Todos</option>';
-        [...objetivosOfDiretriz].sort().forEach(o => {
-            const option = document.createElement('option');
-            option.value = o;
-            option.textContent = o;
-            option.title = o; 
-            objetivoFilter.appendChild(option);
-        });
-    }
-
-    function parseValue(value) {
-        if (value === undefined || value === null) return NaN;
-        const strValue = String(value);
-        if (strValue.toLowerCase() === 'na' || strValue.trim() === '' || strValue.toLowerCase().includes('andamento') || strValue.toLowerCase().includes('apurando') || strValue.toLowerCase().includes('mensurado') || strValue.toLowerCase() === 's/n') return NaN;
-        const cleanedValue = strValue.replace('%', '').replace(',', '.').replace("'", "").trim();
-        const numericValue = parseFloat(cleanedValue);
-        return numericValue; // parseFloat itself returns NaN if parsing fails
-    }
-
-
-    function getStatus(goal, result, expected) {
-        const resultadoVal = String(result).toLowerCase(); 
-        if (result === undefined || result === null || resultadoVal.includes('andamento') || resultadoVal.includes('apurando') || resultadoVal === 's/n' || resultadoVal === 'na' || resultadoVal.includes('mensurado')) {
-             return { text: "Em Andamento", color: "yellow"};
-        }
-        const esperadoNum = parseValue(expected);
-        const resultadoNum = parseValue(result);
-
-        if (isNaN(esperadoNum) || isNaN(resultadoNum)) {
-             return { text: "Não Aplicável", color: "gray"};
-        }
-        
-        const polaridade = goal.polaridade.toUpperCase();
-
-        if (polaridade === 'MENOR') {
-            if (resultadoNum < esperadoNum) return { text: "Superada", color: "green" };
-            if (resultadoNum === esperadoNum) return { text: "Alcançada", color: "green"};
-            return { text: "Não Alcançada", color: "red" };
-        } else { // Default to MAIOR
-             if (resultadoNum > esperadoNum) return { text: "Superada", color: "green"};
-             if (resultadoNum >= esperadoNum) return { text: "Alcançada", color: "green"};
-             if (resultadoNum >= esperadoNum * 0.9) return { text: "Parcialmente Alcançada", color: "orange"};
-             return { text: "Não Alcançada", color: "red"};
-        }
-    }
-    
-    function getSimplifiedStatus(detailedStatusText) {
-        switch(detailedStatusText) {
-            case 'Superada':
-            case 'Alcançada':
-                return 'Alcançada';
-            case 'Parcialmente Alcançada':
-            case 'Não Alcançada':
-                return 'Não Alcançada';
-            default:
-                return 'Outro'; 
-        }
-    }
-
-    function showLoading(container, message) { container.innerHTML = `<div class="flex items-center justify-center p-8"><svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="text-lg text-gray-600">${message}</span></div>`; }
-    function showError(container, error) { console.error("Error AI:", error); container.innerHTML = `<div class="p-4 bg-red-100 text-red-700 rounded"><strong>Erro:</strong><p>${error.message || 'Falha ao contatar a API.'}</p></div>`; }
-    
-    function renderAllYearCharts(baseFilteredData) {
-        const years = ["2022", "2023", "2024"];
-        chartsGrid.innerHTML = ''; 
-        const selectedQuad = quadrimestreFilter.value;
-        const selectedStatusFilter = statusFilter.value;
-
-        years.forEach(year => {
-            const chartContainer = document.createElement('div');
-            chartContainer.className = 'w-full h-80 flex flex-col items-center';
-            chartContainer.innerHTML = `
-                <h4 class="text-lg font-semibold text-gray-700 mb-2" id="chart-label-${year}">Resumo ${year}</h4>
-                <div class="relative w-full h-full">
-                    <canvas id="summaryChart${year}" role="img" aria-labelledby="chart-label-${year}"></canvas>
-                </div>
-            `;
-            chartsGrid.appendChild(chartContainer);
-
-            let filteredForChart = baseFilteredData;
-             if (selectedStatusFilter !== 'todos') {
-                filteredForChart = baseFilteredData.filter(goal => {
-                    const yearData = goal.yearly_data[year];
-                    if (!yearData) return false;
-                    
-                    let resultForStatusCheck = selectedQuad === 'anual' ? yearData.resultado : (yearData.quadrimestres ? yearData.quadrimestres[selectedQuad] : yearData.resultado);
-                    if (resultForStatusCheck === undefined && selectedQuad !== 'anual') resultForStatusCheck = yearData.resultado;
-
-                    const simplifiedStatus = getSimplifiedStatus(getStatus(goal, resultForStatusCheck, yearData.esperado).text);
-                    return simplifiedStatus === selectedStatusFilter;
-                });
+             // Now, populate the yearly data into the master structure
+            for (const year in dataSets) {
+                for (const diretriz in dataSets[year]) {
+                    for (const objetivo in dataSets[year][diretriz]) {
+                        for (const goalData of dataSets[year][diretriz][objetivo]) {
+                            if (masterData[goalData.id]) {
+                                masterData[goalData.id].yearly_data[year] = {
+                                    esperado: goalData.esperado,
+                                    resultado: goalData.resultado,
+                                    quadrimestres: goalData.quadrimestres || {}
+                                };
+                            }
+                        }
+                    }
+                }
             }
             
-            const statusCounts = { 'Alcançada': 0, 'Não Alcançada': 0, 'Outro': 0 };
-            filteredForChart.forEach(goal => {
-                const yearData = goal.yearly_data[year];
-                if (!yearData) return;
-                let result = selectedQuad === 'anual' ? yearData.resultado : (yearData.quadrimestres ? yearData.quadrimestres[selectedQuad] : yearData.resultado);
-                if (result === undefined && selectedQuad !== 'anual') result = yearData.resultado; 
-                let expected = yearData.esperado;
-                const simplifiedStatus = getSimplifiedStatus(getStatus(goal, result, expected).text);
-                if (statusCounts[simplifiedStatus] !== undefined) {
-                    statusCounts[simplifiedStatus]++;
+            allGoals = Object.values(masterData);
+
+             // Add placeholder data for 2025
+            allGoals.forEach(goal => {
+                if (!goal.yearly_data["2025"]) {
+                     const finalYearData = goal.yearly_data["2024"] || {};
+                     goal.yearly_data["2025"] = {
+                         esperado: finalYearData.esperado || "N/A", 
+                         resultado: "S/N",
+                         quadrimestres: { "1": "S/N", "2": "S/N", "3": "S/N" }
+                     };
                 }
             });
-                        const chartData = {
-                labels: ['Alcançada', 'Não Alcançada', 'Outros (Em Andamento/N/A)'],
-                datasets: [{
-                    label: `Metas ${year}`,
-                    data: [statusCounts['Alcançada'], statusCounts['Não Alcançada'], statusCounts['Outro']],
-                    backgroundColor: ['#22C55E', '#EF4444', '#FBBF24'],
-                    borderColor: '#fff',
-                    borderWidth: 2
-                }]
-            };
-            const canvasElement = document.getElementById(`summaryChart${year}`);
-            if (!canvasElement) return;
-            const ctx = canvasElement.getContext('2d');
-            if (!ctx) return;
-            if (yearCharts[year]) { yearCharts[year].destroy(); }
-            yearCharts[year] = new Chart(ctx, {
-                type: 'doughnut',
-                data: chartData,
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.label || '';
-                                    if (label) { label += ': '; }
-                                    const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                                    const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) + '%' : '0%';
-                                    label += `${context.raw} (${percentage})`;
-                                    return label;
+
+            activeData = allGoals;
+            
+            // Populate diretriz filter
+            diretrizFilter.innerHTML = '<option value="todas">Todas as Diretrizes</option>';
+            [...allDiretrizes].sort().forEach(d => {
+                const option = document.createElement('option');
+                option.value = d;
+                option.textContent = d;
+                option.title = d;
+                diretrizFilter.appendChild(option);
+            });
+            
+            updateObjetivoFilter();
+        }
+
+        function updateObjetivoFilter() {
+            const selectedDiretriz = diretrizFilter.value;
+            const objetivosOfDiretriz = new Set();
+
+            activeData.forEach(goal => {
+                if (selectedDiretriz === 'todas' || goal.diretriz === selectedDiretriz) {
+                    objetivosOfDiretriz.add(goal.objetivo);
+                }
+            });
+            
+            objetivoFilter.innerHTML = '<option value="todos">Todos os Objetivos</option>';
+            [...objetivosOfDiretriz].sort().forEach(o => {
+                const option = document.createElement('option');
+                option.value = o;
+                option.textContent = o;
+                option.title = o;
+                objetivoFilter.appendChild(option);
+            });
+        }
+        // --- Utility Functions ---
+        function parseValue(value) {
+            if (typeof value !== 'string' || value.toLowerCase() === 'na' || value.trim() === '' || value.toLowerCase().includes('andamento') || value.toLowerCase().includes('apurando') || value.toLowerCase().includes('mensurado') || value.toLowerCase() === 's/n') return NaN;
+            const cleanedValue = value.replace('%', '').replace(',', '.').replace("'", "").trim();
+            const numericValue = parseFloat(cleanedValue);
+            return isNaN(numericValue) ? value : numericValue;
+        }
+        function getStatus(goal, result, expected) {
+            const resultadoVal = String(result).toLowerCase();
+            if (resultadoVal.includes('andamento') || resultadoVal.includes('apurando') || resultadoVal === 's/n' || resultadoVal === 'na' || resultadoVal.includes('mensurado')) {
+                 return { text: "Em Andamento", color: "yellow"};
+            }
+            const esperadoNum = parseValue(String(expected));
+            const resultadoNum = parseValue(String(result));
+            if (isNaN(esperadoNum) || isNaN(resultadoNum)) {
+                 return { text: "Não Aplicável", color: "gray"};
+            }
+            
+            const polaridade = goal.polaridade.toUpperCase();
+
+            if (polaridade === 'MENOR') {
+                if (resultadoNum < esperadoNum) return { text: "Superada", color: "green" };
+                if (resultadoNum == esperadoNum) return { text: "Alcançada", color: "blue"};
+                return { text: "Não Alcançada", color: "red" };
+            } else { // Default to MAIOR
+                 if (resultadoNum > esperadoNum) return { text: "Superada", color: "green"};
+                 if (resultadoNum >= esperadoNum) return { text: "Alcançada", color: "blue"};
+                 if (resultadoNum >= esperadoNum * 0.9) return { text: "Parcialmente Alcançada", color: "orange"}; // 90% threshold
+                 return { text: "Não Alcançada", color: "red"};
+            }
+        }
+                function getSimplifiedStatus(detailedStatusText) {
+            switch(detailedStatusText) {
+                case 'Superada':
+                case 'Alcançada':
+                    return 'Alcançada';
+                case 'Parcialmente Alcançada':
+                case 'Não Alcançada':
+                    return 'Não Alcançada';
+                default:
+                    return 'Outro';
+            }
+        }
+        function showLoading(container, message) { container.innerHTML = `<div class="flex items-center justify-center p-8"><svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="text-lg text-gray-600">${message}</span></div>`; }
+        function showError(container, error) { console.error("Error AI:", error); container.innerHTML = `<div class="p-4 bg-red-100 text-red-700 rounded"><strong>Erro:</strong><p>${error.message || 'Falha ao contatar a API.'}</p></div>`; }
+        
+        // --- Chart Logic ---
+        function renderAllYearCharts(baseFilteredData) {
+            const years = ["2022", "2023", "2024"];
+            chartsGrid.innerHTML = '';
+            const selectedQuad = quadrimestreFilter.value;
+            const selectedStatusFilter = statusFilter.value;
+            years.forEach(year => {
+                const chartContainer = document.createElement('div');
+                chartContainer.className = 'w-full h-80 flex flex-col items-center';
+                chartContainer.innerHTML = `
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">${year}</h4>
+                    <div class="relative w-full h-full">
+                        <canvas id="summaryChart${year}"></canvas>
+                    </div>`;
+                chartsGrid.appendChild(chartContainer);
+
+                let filteredForChart = baseFilteredData;
+                 if (selectedStatusFilter !== 'todos') {
+                    filteredForChart = baseFilteredData.filter(goal => {
+                        const yearData = goal.yearly_data[year];
+                        if (!yearData) return false;
+                        let resultForStatusCheck = selectedQuad === 'anual' ? yearData.resultado : (yearData.quadrimestres ? yearData.quadrimestres[selectedQuad] : yearData.resultado);
+                        const simplifiedStatus = getSimplifiedStatus(getStatus(goal, resultForStatusCheck, yearData.esperado).text);
+                        return simplifiedStatus === selectedStatusFilter;
+                    });
+                }
+                
+                const statusCounts = { 'Alcançada': 0, 'Não Alcançada': 0, 'Outro': 0 };
+                filteredForChart.forEach(goal => {
+                    const yearData = goal.yearly_data[year];
+                    if (!yearData) return;
+                    let result = selectedQuad === 'anual' ? yearData.resultado : (yearData.quadrimestres ? yearData.quadrimestres[selectedQuad] : yearData.resultado);
+                    let expected = yearData.esperado;
+                    const simplifiedStatus = getSimplifiedStatus(getStatus(goal, result, expected).text);
+                    if (statusCounts[simplifiedStatus] !== undefined) {
+                        statusCounts[simplifiedStatus]++;
+                    }
+                });
+                                const chartData = {
+                    labels: ['Alcançada', 'Não Alcançada', 'Outros'],
+                    datasets: [{
+                        data: [statusCounts['Alcançada'], statusCounts['Não Alcançada'], statusCounts['Outro']],
+                        backgroundColor: ['#3B82F6', '#EF4444', '#FBBF24'],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                };
+                const ctx = document.getElementById(`summaryChart${year}`).getContext('2d');
+                if (yearCharts[year]) { yearCharts[year].destroy(); }
+
+                yearCharts[year] = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: chartData,
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) { label += ': '; }
+                                        const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                        const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) + '%' : '0%';
+                                        label += `${context.raw} (${percentage})`;
+                                        return label;
+                                    }
                                 }
                             }
                         }
                     }
-                }
+                });
             });
-        });
-    }
-    
-    function renderGoals(filteredData, selectedYear) {
-        goalsGrid.innerHTML = '';
-        const selectedQuad = quadrimestreFilter.value;
-        goalsListTitle.textContent = `Detalhamento das Metas - ${selectedYear}${selectedQuad !== 'anual' ? ` (${selectedQuad}º RDQA)` : ' (Anual)'}`;
-
-        if (filteredData.length === 0) {
-            noResults.classList.remove('hidden');
-            return;
         }
-        noResults.classList.add('hidden');
-        filteredData.forEach(goal => {
-            const yearData = goal.yearly_data[selectedYear];
-            if (!yearData) return;
-
-            let displayResult = selectedQuad === 'anual' ? yearData.resultado : (yearData.quadrimestres ? yearData.quadrimestres[selectedQuad] : yearData.resultado);
-            if (displayResult === undefined && selectedQuad !== 'anual') displayResult = yearData.resultado; 
-            const statusInfo = getStatus(goal, displayResult, yearData.esperado);
-            let historyHtml = ['2022', '2023', '2024', '2025'].map(year => {
-                const data = goal.yearly_data[year];
-                if (!data) return `<div class="bg-gray-100 col-span-2"><strong class="font-semibold">${year}:</strong> N/A</div>`;
-                                let histResult = selectedQuad === 'anual' || year !== selectedYear ? data.resultado : (data.quadrimestres ? data.quadrimestres[selectedQuad] : data.resultado);
-                if (histResult === undefined && selectedQuad !== 'anual' && year === selectedYear) histResult = data.resultado;
-                const historyStatus = getStatus(goal, histResult, data.esperado);
-                return `<div class="bg-gray-100"><strong class="font-semibold">${year}:</strong></div><div class="bg-gray-100 text-right"><span class="text-${historyStatus.color}-600 font-semibold">${histResult || 'N/A'}</span> / ${data.esperado || 'N/A'}</div>`;
-            }).join('');
-            const card = document.createElement('div');
-            card.className = `goal-card bg-white p-4 rounded-lg shadow-sm border-l-4 border-${statusInfo.color}-500 cursor-pointer flex flex-col`;
-            card.setAttribute('role', 'button');
-            card.setAttribute('tabindex', '0'); 
-            card.setAttribute('aria-label', `Detalhes da Meta ${goal.id}: ${goal.title}`);
-            card.innerHTML = `
-                <div class="flex-grow flex flex-col">
-                    <div class="flex justify-between items-start mb-2">
-                         <h3 class="text-base font-semibold text-gray-800">Meta ${goal.id}</h3>
-                        <span class="text-xs font-bold uppercase px-2 py-1 bg-${statusInfo.color}-100 text-${statusInfo.color}-800 rounded-full whitespace-nowrap">${statusInfo.text}</span>
-                    </div>
-                    <p class="text-gray-600 text-sm my-2 flex-grow">${goal.title}</p>
-                    <div class="mt-3 pt-3 border-t">
-                        <h4 class="text-xs font-bold text-gray-500 mb-2 uppercase">Histórico de Resultados (${selectedQuad === 'anual' ? 'Anual' : selectedQuad + 'º RDQA'}) (Resultado / Esperado)</h4>
-                        <div class="year-result-grid">
-                            ${historyHtml}
-                        </div>
-                    </div>
-                </div>
-            `;
-            card.addEventListener('click', () => openGoalModal(goal));
-            card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') openGoalModal(goal); });
-            goalsGrid.appendChild(card);
-        });
-    }
-        function filterAndRender() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const selectedDiretriz = diretrizFilter.value;
-        const selectedObjetivo = objetivoFilter.value;
         
-        const baseFilteredData = activeData.filter(goal => {
-            const searchMatch = goal.title.toLowerCase().includes(searchTerm) || String(goal.id).includes(searchTerm) || `meta ${goal.id}`.includes(searchTerm);
-            const diretrizMatch = selectedDiretriz === 'todas' || goal.diretriz === selectedDiretriz;
-            const objetivoMatch = selectedObjetivo === 'todos' || goal.objetivo === selectedObjetivo;
-            return searchMatch && diretrizMatch && objetivoMatch;
-        });
-        currentFilteredData = baseFilteredData; 
-        renderAllYearCharts(baseFilteredData); 
-                const selectedYearToList = yearFilter.value;
-        renderGoals(baseFilteredData, selectedYearToList);
-    }
-    async function callGeminiAPI(promptText) {
-        try {
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-preview-04-17',
-                contents: promptText 
-            });
-            const text = response.text;
-            if (typeof text === 'string') {
-                return text;
-            } else {
-                console.error("Invalid API response: text is not a string or is missing.", response);
-                throw new Error('Resposta da API inválida ou texto não encontrado.');
-            }
-        } catch (error) {
-            console.error("Gemini API call failed:", error);
-            let errorMessage = 'Falha ao contatar a API Gemini.';
-            if (error instanceof Error && error.message) {
-                errorMessage += ` Detalhes: ${error.message}`;
-            }
-            console.error("Original Gemini API error details:", error);
-            throw new Error(errorMessage);
-        }
-    }
-    
-    async function generateQualitativeAnalysis(goal, resultForModal, statusForModal, periodText, year) {
-        const contentContainer = document.getElementById('qualitative-analysis-content');
-        const genButton = document.getElementById('generate-analysis-btn');
-        genButton.disabled = true;
-        showLoading(contentContainer, "Gerando análise qualitativa...");
-        (document.getElementById('action-plan-container')).classList.add('hidden'); 
-        (document.getElementById('export-action-plan-csv-btn'))?.classList.add('hidden');
-        const yearData = goal.yearly_data[year];
-        const prompt = `
-            Você é um especialista em gestão de saúde pública (SUS) e análise de indicadores do Relatório Anual de Gestão (RAG).
-            Gere uma análise qualitativa concisa e objetiva para a seguinte meta:
+        // --- Data Loading & Rendering ---
+        function renderGoals(filteredData, selectedYear) {
+            goalsGrid.innerHTML = '';
+            const selectedQuad = quadrimestreFilter.value;
+            goalsListTitle.textContent = `Detalhamento das Metas - ${selectedYear}`;
 
-            **Meta ID:** ${goal.id}
-            **Título da Meta:** ${goal.title}
-            **Ano de Referência:** ${year}
-            **Período de Análise:** ${periodText}
-            **Diretriz Estratégica:** ${goal.diretriz}
-            **Objetivo Estratégico:** ${goal.objetivo}
-            **Resultado Esperado:** ${yearData.esperado}
-            **Resultado Alcançado:** ${resultForModal}
-            **Status Atual:** ${statusForModal.text}
-            **Polaridade da Meta:** ${goal.polaridade === 'maior' ? 'Quanto maior, melhor' : 'Quanto menor, melhor'}
-            **Instruções para a Análise (formato Markdown):**
-            1.  **Análise Comparativa do Resultado:**
-                *   Compare brevemente o resultado alcançado com o esperado para o período.
-                *   Destaque se o resultado superou, atingiu, atingiu parcialmente ou não atingiu a meta, e a relevância dessa diferença.
-            2.  **Hipóteses e Fatores Contribuintes (2-3 pontos principais):**
-                *   Levante hipóteses concisas sobre os possíveis fatores que influenciaram o resultado (positivo ou negativo).
-                *   Seja específico(a) se possível, considerando o contexto da saúde pública.
-            3.  **Sugestões Estratégicas (2-3 ações concretas):**
-                *   Proponha ações claras, realistas e direcionadas para manter/melhorar o resultado ou para reverter um cenário negativo.
-                *   As ações devem ser focadas e de alto impacto.
-            Mantenha a linguagem profissional, clara e direta. Evite generalidades excessivas.
-            O resultado deve ser apenas o texto em Markdown.
-        `;
-        try {
-            const text = await callGeminiAPI(prompt);
-            const converter = new showdown.Converter({tables: true, openLinksInNewWindow: true, simplifiedAutoLink: true, strikethrough: true});
-            contentContainer.innerHTML = converter.makeHtml(text);
-            const actionPlanBtn = document.getElementById('generate-action-plan-btn');
-            actionPlanBtn.classList.remove('hidden');
-            actionPlanBtn.dataset.analysisText = text; 
-            actionPlanBtn.disabled = false; 
-        } catch (error) { showError(contentContainer, error); } finally { genButton.disabled = false; }
-    }
-    function parseMarkdownTableToCsv(markdownTableText) {
-        if (!markdownTableText || typeof markdownTableText !== 'string') return "";
-        const lines = markdownTableText.trim().split('\n');
-        if (lines.length < 1) return ""; // Need at least a header row
-        const csvRows = [];
-        const escapeCsvCell = (cell) => {
-            let cleanedCell = cell.trim();
-            // If cell contains comma, newline, or double quote, enclose in double quotes
-            if (cleanedCell.includes(',') || cleanedCell.includes('\n') || cleanedCell.includes('"')) {
-                cleanedCell = `"${cleanedCell.replace(/"/g, '""')}"`; // Escape double quotes by doubling them
-            }
-            return cleanedCell;
-        };
-        let isTableContent = false;
-        lines.forEach((line, index) => {
-            line = line.trim();
-            if (!line.startsWith('|') || !line.endsWith('|')) {
-                // If we were in a table and this line is not part of it, stop processing further lines as table
-                if(isTableContent) isTableContent = false;
+            if (filteredData.length === 0) {
+                noResults.classList.remove('hidden');
                 return;
             }
-            isTableContent = true;
+            noResults.classList.add('hidden');
+            filteredData.forEach(goal => {
+                const yearData = goal.yearly_data[selectedYear];
+                if (!yearData) return;
 
+                let displayResult = selectedQuad === 'anual' ? yearData.resultado : (yearData.quadrimestres ? yearData.quadrimestres[selectedQuad] : yearData.resultado);
+                const statusInfo = getStatus(goal, displayResult, yearData.esperado);
 
-            // Skip separator line (e.g., |---|---|---| or |:---|:--:|---:|)
-            // A more robust check for separator line:
-            if (line.match(/^\|[-:|'\s]+\|$/) && line.includes('-')) { // Check for presence of '-'
-                 if (index === 0) return; // Cannot be a separator if it's the first line
-                 // Check if the previous line was a header (not a separator itself)
-                 const prevLine = lines[index-1]?.trim();
-                 if (prevLine && prevLine.startsWith('|') && !prevLine.match(/^\|[-:|'\s]+\|$/)) {
-                    return; // This is likely a separator
-                 }
-            }
+                let historyHtml = ['2022', '2023', '2024', '2025'].map(year => {
+                    const data = goal.yearly_data[year];
+                    if (!data) return `<div class="bg-gray-100 col-span-2"><strong class="font-semibold">${year}:</strong> N/A</div>`;
+                    const historyStatus = getStatus(goal, data.resultado, data.esperado);
+                    return `<div class="bg-gray-100"><strong class="font-semibold">${year}:</strong></div><div class="bg-gray-100 text-right"><span class="text-${historyStatus.color}-600 font-semibold">${data.resultado}</span> / ${data.esperado}</div>`;
+                }).join('');
 
-
-            const cells = line.slice(1, -1).split('|').map(escapeCsvCell);
-            if (cells.length > 0 && cells.some(cell => cell.trim() !== '')) { // Ensure row is not just empty cells
-                csvRows.push(cells.join(','));
-            }
-        });
-
-        return csvRows.join('\n');
-    }
-
-    function downloadCsv(csvString, filename) {
-        const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' }); // Add BOM for Excel compatibility
-        const link = document.createElement("a");
-        if (link.download !== undefined) {
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", filename);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        } else {
-            alert("Seu navegador não suporta o download automático. Por favor, copie o conteúdo manualmente se necessário.");
+                const card = document.createElement('div');
+                card.className = `goal-card bg-white p-4 rounded-lg shadow-sm border-l-4 border-${statusInfo.color}-500 cursor-pointer flex flex-col`;
+                card.innerHTML = `
+                    <div class="flex-grow flex flex-col">
+                        <div class="flex justify-between items-start mb-2">
+                             <h3 class="text-base font-semibold text-gray-800">Meta ${goal.id}</h3>
+                            <span class="text-xs font-bold uppercase px-2 py-1 bg-${statusInfo.color}-100 text-${statusInfo.color}-800 rounded-full whitespace-nowrap">${statusInfo.text}</span>
+                        </div>
+                        <p class="text-gray-600 text-sm my-2 flex-grow">${goal.title}</p>
+                        <div class="mt-3 pt-3 border-t">
+                            <h4 class="text-xs font-bold text-gray-500 mb-2 uppercase">Histórico de Resultados (Resultado / Esperado)</h4>
+                            <div class="year-result-grid">
+                                ${historyHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                card.addEventListener('click', () => openGoalModal(goal));
+                goalsGrid.appendChild(card);
+            });
         }
-    }
-        async function generateActionPlan(goal, analysisText, currentSelectedYear, currentPeriodText) {
-        const contentContainer = document.getElementById('action-plan-content');
-        const genButton = document.getElementById('generate-action-plan-btn');
-        const exportCsvButton = document.getElementById('export-action-plan-csv-btn');
-
-        genButton.disabled = true;
-        if (exportCsvButton) exportCsvButton.classList.add('hidden');
-        (document.getElementById('action-plan-container')).classList.remove('hidden');
-        showLoading(contentContainer, "Elaborando plano de ação...");
-
-        const prompt = `
-            Com base na meta e na análise qualitativa fornecida, crie um plano de ação detalhado.
-            Apresente o plano em uma tabela Markdown com as seguintes colunas: "Ação Proposta", "Responsável Sugerido (Setor/Área)", "Prazo Sugerido (Ex: Curto, Médio, Longo Prazo ou data específica)", "Recursos Necessários (Principais)".
-            **Meta ID:** ${goal.id}
-            **Título da Meta:** ${goal.title}
-            **Análise Qualitativa Fornecida:**
-            ---
-            ${analysisText}
-            ---
-            **Instruções para o Plano de Ação:**
-            *   As ações devem ser concretas, mensuráveis (se possível), alcançáveis, relevantes e com prazos definidos.
-            *   Derive as ações das "Sugestões Estratégicas" e "Hipóteses/Problemáticas" da análise.
-            *   Seja específico quanto aos responsáveis e recursos, mesmo que genéricos (ex: "Equipe da Atenção Básica", "Recursos Humanos e Materiais de Escritório").
-            *   Formate a resposta exclusivamente como uma tabela Markdown. Não inclua texto introdutório ou conclusivo fora da tabela.
-        `;
-        try {
-            const markdownText = await callGeminiAPI(prompt);
-            const converter = new showdown.Converter({tables: true, openLinksInNewWindow: true, simplifiedAutoLink: true, strikethrough: true});
-            contentContainer.innerHTML = converter.makeHtml(markdownText);
-
-            const csvContent = parseMarkdownTableToCsv(markdownText);
-            if (exportCsvButton) {
-                if (csvContent && csvContent.trim() !== "") {
-                    exportCsvButton.classList.remove('hidden');
-                    exportCsvButton.onclick = () => {
-                        const filename = `Plano_Acao_Meta_${goal.id}_${currentSelectedYear}_${currentPeriodText.replace(/º RDQA/g, 'Q').replace(/\s+/g, '_')}.csv`;
-                        downloadCsv(csvContent, filename);
-                    };
-                } else {
-                    exportCsvButton.classList.add('hidden');
-                     console.warn("CSV content is empty or invalid, hiding export button.");
-                }
-            }
-        } catch (error) {
-            showError(contentContainer, error);
-            if (exportCsvButton) exportCsvButton.classList.add('hidden');
-        } finally {
-            genButton.disabled = false;
-        }
-    }
-    async function exportModalContentToPDF(goal, selectedYear, periodText) {
-        // @ts-ignore
-        const { jsPDF } = window.jspdf;
-        const modalContentForExport = document.getElementById('ai-export-content');
-        const modalTitleText = `Análise da Meta ${goal.id}: ${goal.title}`;
-        const modalSubtitleText = `RAG ${selectedYear} - ${periodText}`;
-            if (!modalContentForExport) {
-            alert("Conteúdo para exportação não encontrado.");
-            return;
-        }
-            const actionPlanContainer = document.getElementById('action-plan-container');
-        const actionPlanContentElement = document.getElementById('action-plan-content');
-        const actionPlanWasHidden = actionPlanContainer.classList.contains('hidden');
         
-        // Temporarily show action plan if it has content and was hidden, for PDF generation
-        if (actionPlanWasHidden && actionPlanContentElement && actionPlanContentElement.innerHTML.trim() !== '') {
-            actionPlanContainer.classList.remove('hidden');
+        function filterAndRender() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedDiretriz = diretrizFilter.value;
+            const selectedObjetivo = objetivoFilter.value;
+            
+            const baseFilteredData = activeData.filter(goal => {
+                const searchMatch = goal.title.toLowerCase().includes(searchTerm) || `meta ${goal.id}`.includes(searchTerm);
+                const diretrizMatch = selectedDiretriz === 'todas' || goal.diretriz === selectedDiretriz;
+                const objetivoMatch = selectedObjetivo === 'todos' || goal.objetivo === selectedObjetivo;
+                return searchMatch && diretrizMatch && objetivoMatch;
+            });
+
+            currentFilteredData = baseFilteredData;
+            renderAllYearCharts(baseFilteredData);
+            
+            const selectedYear = yearFilter.value;
+            renderGoals(baseFilteredData, selectedYear);
         }
-    
-        const exportButton = document.getElementById('export-pdf-btn');
-        const originalButtonText = exportButton.innerHTML;
-        exportButton.disabled = true;
-        exportButton.innerHTML = 'Gerando PDF... <svg class="animate-spin inline-block ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+        // --- AI & API Logic ---
+        async function callGeminiAPI(prompt) {
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            
             try {
-            // @ts-ignore
-            const canvas = await html2canvas(modalContentForExport, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                 onclone: (documentClone) => {
-                    const clonedContent = documentClone.getElementById('ai-export-content');
-                    if (clonedContent) {
-                        const analysisContent = clonedContent.querySelector('#qualitative-analysis-content');
-                        const planContainer = clonedContent.querySelector('#action-plan-container');
-                        const planContent = clonedContent.querySelector('#action-plan-content');
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }] })
+                });
 
-                        if (analysisContent) (analysisContent).style.display = 'block';
-                        
-                        // Only make planContent visible if it has actual content
-                        if (planContainer && planContent && planContent.innerHTML.trim() !== '') {
-                           (planContainer).style.display = 'block'; // Show container
-                           (planContent).style.display = 'block'; // Show content
-                        } else if (planContainer) {
-                           (planContainer).style.display = 'none'; // Hide if no content
-                        }
-                        clonedContent.querySelectorAll('h3').forEach(h => {
-                            (h).style.color = '#1f2937'; 
-                            (h).style.fontSize = '1.25rem'; 
-                            (h).style.fontWeight = '700';
-                            (h).style.marginBottom = '1rem'; // Ensure spacing
-                        });
-                         clonedContent.querySelectorAll('.ai-content table').forEach(table => {
-                            (table).style.width = '100%';
-                            (table).style.borderCollapse = 'collapse';
-                        });
-                        clonedContent.querySelectorAll('.ai-content th, .ai-content td').forEach(cell => {
-                            (cell).style.border = '1px solid #ddd';
-                            (cell).style.padding = '8px';
-                            (cell).style.textAlign = 'left';
-                        });
-                         clonedContent.querySelectorAll('.ai-content th').forEach(th => {
-                            (th).style.backgroundColor = '#f2f2f2';
-                        });
-                    }
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status} ${response.statusText}`);
                 }
-            });
-    
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF({
-                orientation: 'p',
-                unit: 'mm',
-                format: 'a4'
-            });
-    
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
-            const margin = 15;
-            const contentWidth = pdfWidth - 2 * margin;
-    
-            let currentY = margin;
-            pdf.setFontSize(16);
-            pdf.setTextColor(40, 40, 40);
-            const titleLines = pdf.splitTextToSize(modalTitleText, contentWidth);
-            pdf.text(titleLines, margin, currentY + 5);
-            currentY += titleLines.length * 7 + 5; 
-                pdf.setFontSize(12);
-            pdf.setTextColor(100, 100, 100);
-            const subtitleLines = pdf.splitTextToSize(modalSubtitleText, contentWidth);
-            pdf.text(subtitleLines, margin, currentY);
-            currentY += subtitleLines.length * 5 + 10;
-                const imgProps = pdf.getImageProperties(imgData);
-            const canvasOriginalWidth = imgProps.width;
-            const canvasOriginalHeight = imgProps.height;
-                        const imageDisplayWidth = contentWidth;
-            const imageDisplayHeight = (canvasOriginalHeight * imageDisplayWidth) / canvasOriginalWidth;
-            let canvasCutPositionY = 0; 
-            let canvasHeightRemaining = canvasOriginalHeight;
-    
-            while (canvasHeightRemaining > 0) {
-                if (currentY > pdfHeight - margin - 10 && canvasHeightRemaining > 0) { 
-                    pdf.addPage();
-                    currentY = margin;
-                }
-                    const availablePageHeightForImage = pdfHeight - margin - currentY;
-                let canvasSliceHeight = (availablePageHeightForImage / imageDisplayHeight) * canvasOriginalHeight;
-                canvasSliceHeight = Math.min(canvasSliceHeight, canvasHeightRemaining); 
-                
-                if (canvasSliceHeight <= 0 && canvasHeightRemaining > 0) { 
-                    if (currentY !== margin || (currentY === margin && availablePageHeightForImage <=0) ) pdf.addPage(); 
-                    currentY = margin;
-                    const fullPageImageHeight = pdfHeight - 2 * margin;
-                    canvasSliceHeight = Math.min( (fullPageImageHeight / imageDisplayHeight) * canvasOriginalHeight, canvasHeightRemaining);
-                }
-                const displaySegmentHeight = (canvasSliceHeight * imageDisplayWidth) / canvasOriginalWidth;
+                                const result = await response.json();
 
-                if (displaySegmentHeight > 0) {
-                    pdf.addImage(
-                        imgData, 'PNG',
-                        margin, currentY,
-                        imageDisplayWidth, displaySegmentHeight,
-                        undefined, 'FAST', 0,
-                        0, 
-                        canvasCutPositionY, 
-                        canvasOriginalWidth, 
-                        canvasSliceHeight  
-                    );
+                if (result.candidates && result.candidates[0]?.content?.parts[0]?.text) {
+                    return result.candidates[0].content.parts[0].text;
+                } else {
+                    console.error("Invalid API response structure:", result);
+                    throw new Error('Resposta da API inválida ou vazia.');
                 }
-                currentY += displaySegmentHeight + 2; 
-                canvasCutPositionY += canvasSliceHeight;
-                canvasHeightRemaining -= canvasSliceHeight;
-            }
-            pdf.save(`Analise_Meta_${goal.id}_${selectedYear}_${periodText.replace(/º RDQA/g, 'Q').replace(/\s+/g, '_')}.pdf`);
             } catch (error) {
-            console.error("Error generating PDF:", error);
-            alert("Falha ao gerar o PDF. Verifique o console para mais detalhes.");
-        } finally {
-            // Restore visibility of action plan container if it was originally hidden
-            if (actionPlanWasHidden && actionPlanContainer) {
-                actionPlanContainer.classList.add('hidden');
+                console.error("Fetch failed:", error);
+                throw error;
             }
-            exportButton.disabled = false;
-            exportButton.innerHTML = originalButtonText;
         }
-    }
-    
-    function openGoalModal(goal) {
-        const selectedYear = yearFilter.value;
-        const period = quadrimestreFilter.value;
-        const periodText = period === 'anual' ? 'Anual' : `${period}º RDQA`;
-        const yearData = goal.yearly_data[selectedYear];
+                async function generateGlobalAnalysis() {
+            const selectedYear = yearFilter.value;
+            const period = quadrimestreFilter.value;
+            const periodText = period === 'anual' ? 'Anual' : `${period}º RDQA`;
 
-        if (!yearData) {
-            console.warn(`No data found for goal ${goal.id} in year ${selectedYear}`);
-            modalWrapper.innerHTML = `<div class="p-6 text-center text-red-500">Dados não disponíveis para esta meta no ano selecionado.</div> <button id="close-modal" class="absolute top-4 right-4 text-gray-500 text-3xl leading-none hover:text-gray-800">&times;</button>`;
+            if(currentFilteredData.length === 0){
+                alert("Nenhuma meta encontrada para os filtros selecionados. Por favor, ajuste os filtros e tente novamente.");
+                return;
+            }
+            const dataSummary = currentFilteredData.map(goal => {
+                const yearData = goal.yearly_data[selectedYear];
+                if (!yearData) return null;
+                const result = period === 'anual' ? yearData.resultado : (yearData.quadrimestres ? yearData.quadrimestres[period] : 'N/A');
+                const status = getStatus(goal, result, yearData.esperado).text;
+                return `- Meta ${goal.id} (${goal.title}): Esperado=${yearData.esperado}, Resultado=${result}, Status=${status}, Diretriz='${goal.diretriz}'`;
+            }).filter(Boolean).join("\n");
+                        const prompt = `
+                Você é um consultor estratégico de saúde pública. Analise o seguinte conjunto de metas do Relatório Anual de Gestão (RAG) para o ano de ${selectedYear} (${periodText}).
+                **Dados das Metas Filtradas:**
+                ${dataSummary}
+                **Sua Tarefa (formato Markdown):**
+                1.  **Sumário Executivo:** Forneça um resumo conciso do desempenho geral, destacando a proporção de metas alcançadas versus não alcançadas.
+                2.  **Análise de Destaques:**
+                    * **Pontos Fortes:** Identifique 2-3 áreas ou diretrizes com desempenho notavelmente positivo.
+                    * **Pontos de Atenção:** Identifique 2-3 áreas ou diretrizes que representam os maiores desafios ou que tiveram desempenho abaixo do esperado.
+                3.  **Recomendações Estratégicas:** Com base na análise, sugira 3 recomendações prioritárias para a gestão. As recomendações devem ser acionáveis e direcionadas para as áreas que mais precisam de intervenção.
+            `;
+            openGenericModal("Análise Geral com IA ✨", `RAG ${selectedYear} - ${periodText}`);
+            const contentContainer = document.getElementById('generic-modal-content');
+            showLoading(contentContainer, "Analisando dados e gerando insights...");
+            try {
+                const text = await callGeminiAPI(prompt);
+                const converter = new showdown.Converter({tables: true, openLinksInNewWindow: true});
+                contentContainer.innerHTML = converter.makeHtml(text);
+            } catch (error) { showError(contentContainer, error); }
+        }
+        async function generateQualitativeAnalysis(goal, resultForModal, statusForModal, periodText, year) {
+            const contentContainer = document.getElementById('qualitative-analysis-content');
+            const genButton = document.getElementById('generate-analysis-btn');
+            genButton.disabled = true;
+            showLoading(contentContainer, "Gerando análise qualitativa...");
+            document.getElementById('action-plan-container').classList.add('hidden');
+            const yearData = goal.yearly_data[year];
+
+            const prompt = `
+                Você é um especialista em gestão de saúde pública (SUS). Gere uma análise qualitativa para a meta do RAG.
+                **Dados:**
+                - **Meta:** ${goal.id} - ${goal.title} | **Ano:** ${year} | **Período:** ${periodText}
+                - **Diretriz:** ${goal.diretriz} | **Objetivo:** ${goal.objetivo}
+                - **Esperado:** ${yearData.esperado} | **Resultado:** ${resultForModal} | **Status:** ${statusForModal.text}
+                **Análise (em Markdown):**
+                1.  **Análise Dissertativa:** Compare o resultado com o esperado.
+                2.  **Hipóteses e Problemáticas:** Levante 2-3 hipóteses para o resultado.
+                3.  **Proposição de Ações:** Sugira 2-3 ações concretas e estratégicas.
+            `;
+            try {
+                const text = await callGeminiAPI(prompt);
+                const converter = new showdown.Converter({tables: true, openLinksInNewWindow: true});
+                contentContainer.innerHTML = converter.makeHtml(text);
+                const actionPlanBtn = document.getElementById('generate-action-plan-btn');
+                actionPlanBtn.classList.remove('hidden');
+                actionPlanBtn.dataset.analysisText = text;
+            } catch (error) { showError(contentContainer, error); } finally { genButton.disabled = false; }
+        }
+                async function generateActionPlan(goal, analysisText) {
+            const contentContainer = document.getElementById('action-plan-content');
+            const genButton = document.getElementById('generate-action-plan-btn');
+            genButton.disabled = true;
+            document.getElementById('action-plan-container').classList.remove('hidden');
+            showLoading(contentContainer, "Elaborando plano de ação...");
+            const prompt = `
+                Baseado na meta e na análise qualitativa a seguir, crie um plano de ação detalhado em tabela Markdown.
+                **Meta:** ${goal.title} (ID: ${goal.id})
+                **Análise Fornecida:** ${analysisText}
+                **Tabela (Colunas):** "Ação Proposta", "Responsável Sugerido (Setor/Área)", "Prazo Sugerido", "Recursos Necessários".
+            `;
+            try {
+                const text = await callGeminiAPI(prompt);
+                const converter = new showdown.Converter({tables: true, openLinksInNewWindow: true});
+                contentContainer.innerHTML = converter.makeHtml(text);
+            } catch (error) { showError(contentContainer, error); } finally { genButton.disabled = false; }
+        }
+                // --- Modal Logic ---
+        function openGenericModal(title, subtitle) {
+             modalWrapper.innerHTML = `
+                <div class="p-6 md:p-8">
+                    <div class="flex justify-between items-start mb-4 pb-4 border-b">
+                        <div><h2 class="text-2xl font-bold text-gray-800">${title}</h2><p class="text-sm text-gray-500">${subtitle}</p></div>
+                        <button id="close-modal" class="text-gray-500 text-3xl leading-none hover:text-gray-800">&times;</button>
+                    </div>
+                    <div id="generic-modal-content" class="ai-content text-gray-700 leading-relaxed min-h-[10rem]"></div>
+                </div>`;
             modal.classList.remove('hidden');
-            (document.getElementById('close-modal')).addEventListener('click', () => modal.classList.add('hidden'));
-            return;
+            document.getElementById('close-modal').addEventListener('click', () => modal.classList.add('hidden'));
+            modal.addEventListener('click', (e) => { if (e.target.id === 'goal-modal') modal.classList.add('hidden'); });
         }
-
-        let resultForModal = period === 'anual' ? yearData.resultado : (yearData.quadrimestres ? yearData.quadrimestres[period] : yearData.resultado);
-        if (resultForModal === undefined && period !== 'anual') resultForModal = yearData.resultado; 
-        
-        let statusForModal = getStatus(goal, resultForModal, yearData.esperado);
-
-        let variacaoDisplay = "N/A";
-        const esperadoNum = parseValue(yearData.esperado);
-        const resultadoNum = parseValue(resultForModal);
-
-        const isEsperadoPerc = typeof yearData.esperado === 'string' && yearData.esperado.includes('%');
-        const stringResultForModal = String(resultForModal);
-        const isResultadoPerc = typeof resultForModal === 'string' && stringResultForModal.includes('%');
-        const isPercentageContext = isEsperadoPerc || isResultadoPerc;
-        
-        if (!isNaN(esperadoNum) && !isNaN(resultadoNum)) {
-            const variacao = resultadoNum - esperadoNum;
-            const isNegative = variacao < 0;
-            const absVariacao = Math.abs(variacao);
-    
-            let formattedAbsVariacao;
-            if (isPercentageContext) {
-                formattedAbsVariacao = absVariacao.toFixed(1); 
-            } else if (Number.isInteger(absVariacao)) {
-                formattedAbsVariacao = absVariacao.toString();
-            } else {
-                formattedAbsVariacao = absVariacao.toFixed(2);
-            }
-            variacaoDisplay = `${isNegative ? '-' : ''}${formattedAbsVariacao}${isPercentageContext ? '%' : ''}`;
-        }
-
-
-        modalWrapper.innerHTML = `
-            <div class="p-6 md:p-8">
-                <div class="flex justify-between items-start mb-4 pb-4 border-b">
-                    <div><h2 class="text-2xl font-bold text-gray-800" id="modal-title-text">Detalhes da Meta ${goal.id}</h2><p class="text-sm text-gray-500">RAG ${selectedYear} - ${periodText}</p></div>
-                    <button id="close-modal" aria-label="Fechar modal" class="text-gray-500 text-3xl leading-none hover:text-gray-800">&times;</button>
-                </div>
-                <div class="space-y-4">
-                    <p class="text-lg text-gray-700 font-medium">${goal.title}</p>
-                    <div class="text-sm text-gray-600 flex items-center">
-                        ${goal.polaridade === 'maior' ? '<span class="text-green-500 mr-2 text-xl">📈</span> Meta de crescimento' : '<span class="text-red-500 mr-2 text-xl">📉</span> Meta de redução'}
+        function openGoalModal(goal) {
+            const selectedYear = yearFilter.value;
+            const period = quadrimestreFilter.value;
+            const periodText = period === 'anual' ? 'Anual' : `${period}º RDQA`;
+            const yearData = goal.yearly_data[selectedYear];
+            if (!yearData) return;
+            let resultForModal = period === 'anual' ? yearData.resultado : (yearData.quadrimestres ? yearData.quadrimestres[period] : yearData.resultado);
+            let statusForModal = getStatus(goal, resultForModal, yearData.esperado);
+            modalWrapper.innerHTML = `
+                <div class="p-6 md:p-8">
+                    <div class="flex justify-between items-start mb-4 pb-4 border-b">
+                        <div><h2 class="text-2xl font-bold text-gray-800">Detalhes da Meta ${goal.id}</h2><p class="text-sm text-gray-500">RAG ${selectedYear} - ${periodText}</p></div>
+                        <button id="close-modal" class="text-gray-500 text-3xl leading-none hover:text-gray-800">&times;</button>
                     </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                        <div class="bg-sky-50 p-4 rounded-lg shadow-sm">
-                            <h5 class="text-sm font-semibold text-sky-700 mb-1">Diretriz</h5>
-                            <p class="text-xs text-sky-600 break-words">${goal.diretriz}</p>
+                    <div class="space-y-4">
+                        <p class="text-lg text-gray-700 font-medium">${goal.title}</p>
+                        <h4 class="font-semibold text-gray-800 mt-6 mb-2">Desempenho Atual (${selectedYear})</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                            <div class="bg-gray-100 p-4 rounded-lg"><p class="text-sm text-gray-500">Esperado</p><p class="text-2xl font-bold">${yearData.esperado}</p></div>
+                            <div class="bg-gray-100 p-4 rounded-lg"><p class="text-sm text-gray-500">Resultado</p><p class="text-2xl font-bold text-${statusForModal.color}-600">${resultForModal || 'N/A'}</p></div>
+                            <div class="bg-${statusForModal.color}-100 text-${statusForModal.color}-800 p-4 rounded-lg flex flex-col items-center justify-center"><p class="text-sm font-medium">Status</p><p class="text-2xl font-bold">${statusForModal.text}</p></div>
                         </div>
-                        <div class="bg-emerald-50 p-4 rounded-lg shadow-sm">
-                            <h5 class="text-sm font-semibold text-emerald-700 mb-1">Objetivo</h5>
-                            <p class="text-xs text-emerald-600 break-words">${goal.objetivo}</p>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mt-4">
-                        <div class="bg-gray-50 p-4 rounded-lg shadow-sm flex flex-col justify-between">
-                            <p class="text-3xl font-bold text-gray-700">${yearData.esperado || 'N/A'}</p>
-                            <p class="text-xs text-gray-500 mt-1">Meta Esperada</p>
-                        </div>
-                        <div class="bg-sky-50 p-4 rounded-lg shadow-sm flex flex-col justify-between">
-                            <p class="text-3xl font-bold text-${statusForModal.color}-600">${resultForModal || 'N/A'}</p>
-                            <p class="text-xs text-sky-600 mt-1">Resultado Alcançado</p>
-                        </div>
-                        <div class="bg-purple-50 p-4 rounded-lg shadow-sm flex flex-col justify-between">
-                            <p class="text-3xl font-bold text-purple-600">${variacaoDisplay}</p>
-                            <p class="text-xs text-purple-600 mt-1">Variação</p>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-8 pt-6 border-t">
-                        <div id="ai-export-content">
-                            <div id="qualitative-analysis-container" class="mb-6">
-                                <h3 class="text-xl font-bold text-gray-800 mb-4">Análise Qualitativa com IA ✨</h3>
-                                <div id="qualitative-analysis-content" class="ai-content text-gray-700 leading-relaxed min-h-[5rem]" aria-live="polite"></div>
-                            </div>
-                            <div id="action-plan-container" class="hidden mb-6">
-                                <h3 class="text-xl font-bold text-gray-800 mb-4">Plano de Ação com IA ✨</h3>
-                                <div id="action-plan-content" class="ai-content text-gray-700 leading-relaxed min-h-[5rem]" aria-live="polite"></div>
-                                <button id="export-action-plan-csv-btn" class="hidden mt-4 w-full sm:w-auto bg-teal-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50">Exportar Plano para CSV</button>
+                        <div class="mt-8 pt-6 border-t">
+                            <div id="qualitative-analysis-container" class="mb-6"><h3 class="text-xl font-bold text-gray-800 mb-4">Análise Qualitativa com IA ✨</h3><div id="qualitative-analysis-content" class="ai-content text-gray-700 leading-relaxed min-h-[5rem]"></div></div>
+                            <div id="action-plan-container" class="hidden mb-6"><h3 class="text-xl font-bold text-gray-800 mb-4">Plano de Ação com IA ✨</h3><div id="action-plan-content" class="ai-content text-gray-700 leading-relaxed min-h-[5rem]"></div></div>
+                            <div class="flex flex-col sm:flex-row gap-4">
+                                <button id="generate-analysis-btn" class="w-full sm:w-auto flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">Gerar Análise</button>
+                                <button id="generate-action-plan-btn" class="w-full sm:w-auto flex-1 hidden bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700">Elaborar Plano de Ação</button>
                             </div>
                         </div>
-                        <div class="flex flex-col sm:flex-row gap-4 mt-4">
-                            <button id="generate-analysis-btn" class="w-full sm:w-auto flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">Gerar Análise</button>
-                            <button id="generate-action-plan-btn" class="w-full sm:w-auto flex-1 hidden bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">Elaborar Plano de Ação</button>
-                            <button id="export-pdf-btn" class="w-full sm:w-auto flex-1 bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">Exportar para PDF</button>
-                        </div>
                     </div>
-                </div>
-            </div>`;
-        modal.classList.remove('hidden');
-        modal.setAttribute('aria-modal', 'true');
-        modal.setAttribute('aria-labelledby', 'modal-title-text');
-
-        const closeModalBtn = document.getElementById('close-modal');
-        closeModalBtn.addEventListener('click', () => {
-            modal.classList.add('hidden');
-            modal.removeAttribute('aria-modal');
-            modal.removeAttribute('aria-labelledby');
-        });
-        (document.getElementById('generate-analysis-btn')).addEventListener('click', () => generateQualitativeAnalysis(goal, resultForModal, statusForModal, periodText, selectedYear));
-        (document.getElementById('generate-action-plan-btn')).addEventListener('click', (e) => {
-            const analysisText = (e.currentTarget).dataset.analysisText;
-            if (analysisText) {
-                generateActionPlan(goal, analysisText, selectedYear, periodText);
-            } else {
-                showError(document.getElementById('action-plan-content'), { name: "InputError", message: "Análise qualitativa não encontrada. Gere a análise primeiro." });
-            }
-        });
-        (document.getElementById('export-pdf-btn')).addEventListener('click', () => exportModalContentToPDF(goal, selectedYear, periodText));
+                </div>`;
+            modal.classList.remove('hidden');
+            document.getElementById('close-modal').addEventListener('click', () => modal.classList.add('hidden'));
+            document.getElementById('generate-analysis-btn').addEventListener('click', () => generateQualitativeAnalysis(goal, resultForModal, statusForModal, periodText, selectedYear));
+            document.getElementById('generate-action-plan-btn').addEventListener('click', (e) => generateActionPlan(goal, e.target.dataset.analysisText));
+            modal.addEventListener('click', (e) => { if (e.target.id === 'goal-modal') modal.classList.add('hidden'); });
+        }
+                // --- Initial Load & Event Listeners ---
+        const allFilters = [yearFilter, searchInput, objetivoFilter, quadrimestreFilter, statusFilter];
+        allFilters.forEach(el => el.addEventListener('change', filterAndRender));
         
-        const escapeListener = (e) => {
-            if (e.key === 'Escape') {
-                modal.classList.add('hidden');
-                modal.removeAttribute('aria-modal');
-                modal.removeAttribute('aria-labelledby');
-                document.removeEventListener('keydown', escapeListener); 
-            }
-        };
-        document.addEventListener('keydown', escapeListener);
-
-        modal.addEventListener('click', (e) => { 
-            if ((e.target).id === 'goal-modal') {
-                modal.classList.add('hidden');
-                modal.removeAttribute('aria-modal');
-                modal.removeAttribute('aria-labelledby');
-                document.removeEventListener('keydown', escapeListener); 
-            }
+        diretrizFilter.addEventListener('change', () => {
+            updateObjetivoFilter();
+            filterAndRender();
         });
-        closeModalBtn.focus(); 
-    }
-    
-    // --- Initial Load & Event Listeners ---
-    const allFilters = [yearFilter, searchInput, objetivoFilter, quadrimestreFilter, statusFilter];
-    allFilters.forEach(el => el.addEventListener('change', filterAndRender));
-    
-    diretrizFilter.addEventListener('change', () => {
-        updateObjetivoFilter(); 
-        filterAndRender(); 
+        searchInput.addEventListener('input', filterAndRender);
+        globalAnalysisBtn.addEventListener('click', generateGlobalAnalysis);
+                initializeData();
+        filterAndRender();
     });
-
-    searchInput.addEventListener('input', filterAndRender); 
-    
-    initializeData();
-    filterAndRender(); 
-});
-
-/*
-declare var Chart: any; 
-declare var showdown: any;
-declare var html2canvas: any; // Declare html2canvas
-// @ts-ignore
-declare var jspdf: any; // Declare jspdf global UMD object
-*/
     </script>
 </body>
 </html>
