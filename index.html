@@ -63,12 +63,23 @@
    <header class="bg-white shadow-md">
     <div class="container mx-auto px-6 py-4 flex justify-between items-center">
         <div class="flex items-center space-x-4">
-            <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" ...></svg>
+            <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
             <h1 id="header-title" class="text-2xl font-bold text-gray-800">Painel de Monitoramento RAG V.01</h1>
         </div>
-        <div class="flex flex-col items-end space-y-0">
-            <span class="text-sm text-gray-500">Instrumento de Gestão do SUS</span>
-            <span class="text-base text-blue-700 font-semibold leading-tight">Parauapebas-PA</span>
+        <div class="flex items-center space-x-6">
+            <div class="flex flex-col items-end space-y-0">
+                <span class="text-sm text-gray-500">Instrumento de Gestão do SUS</span>
+                <span class="text-base text-blue-700 font-semibold leading-tight">Parauapebas-PA</span>
+            </div>
+            <a href="https://drive.google.com/uc?export=download&id=1s7rHeQYqYhZqTiYfHms_UHR5Gs3MAiRT" 
+               target="_blank" 
+               rel="noopener noreferrer"
+               class="flex items-center bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-sm hover:shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+                Baixar Plano Municipal de Saúde 2022 a 2029
+            </a>
         </div>
     </div>
 </header>
@@ -180,7 +191,7 @@
 import { GoogleGenAI } from "@google/genai";
 
 // Initialize the GoogleGenAI client with the API key from environment variables
-const ai = new GoogleGenAI({apiKey: "AIzaSyDEAKHN2dh4z9IsZcqdIBtwGkitz7SmtX4"});
+const ai = new GoogleGenAI({apiKey: "AIzaSyBoxYjmcNkL3kk0aYcNRguL7dW0cLRtC4M"});
 
 // --- TYPE DEFINITIONS ---
 /*
@@ -204,6 +215,7 @@ interface Goal {
     polaridade: string;
     diretriz: string;
     objetivo: string;
+    calculationMethod: string;
     yearly_data: { [year: string]: YearlyGoalData };
 }
 
@@ -351,14 +363,14 @@ const dataSets = {
             "Diretriz 5: Ampliação dos Investimentos em Saúde.":{
                 "Objetivo 5.1: Construir, ampliar e equipar as unidades de saúde.":[
                     {"id":88,"title":"Ampliar a estrutura física de 07 unidades básicas de saúde até 2025.","esperado":"1","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":89,"title":"Construir 06 unidades básicas de saúde até 2025.","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
+                    {"id":89,"title":"Construir 06 unidades básicas de saúde até 2025.","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","1":"0"}},
                     {"id":90,"title":"Equipar as unidades de saúde que foram ampliadas e construidas, em 100% até 2025.","esperado":"100%","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
                     {"id":91,"title":"Construir 01 de Central de Imunização até 2025.","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
                     {"id":92,"title":"Construir 01 Centro de Zoonoses até 2025.","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
                     {"id":93,"title":"Construir 02 Centros de Atenção Psicossocial até 2025 (Caps II caps i).","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
                     {"id":94,"title":"Construir 02 base descentralizada do SAMU até 2025.","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
                     {"id":95,"title":"Construir 01 Centro de Reabilitação tipo IV com oficina ortopédica até 2025.","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":96,"title":"Ampliar estrutura fisica do Pronto Socorro até 20025.","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
+                    {"id":96,"title":"Ampliar estrutura fisica do Pronto Socorro até 2025.","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
                     {"id":97,"title":"Construir 01 heliponto até 2025.","esperado":"0","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}}
                 ]
             }
@@ -474,7 +486,7 @@ const dataSets = {
             "Diretriz 5: Ampliação dos Investimentos em Saúde.":{
                 "Objetivo 5.1: Construir, ampliar e equipar as unidades de saúde.":[
                     {"id":88,"title":"Ampliar a estrutura física de 07 unidades básicas de saúde até 2025.","esperado":"2","resultado":"1","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"2","3":"1"}},
-                    {"id":89,"title":"Construir 06 unidades básicas de saúde até 2025.","esperado":"1","resultado":"0","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
+                    {"id":89,"title":"Construir 06 unidades básicas de saúde até 2025.","esperado":"1","resultado":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","1":"0"}},
                     {"id":90,"title":"Equipar as unidades de saúde que foram ampliadas e construidas, em 100% até 2025.","esperado":"100%","resultado":"0","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
                     {"id":91,"title":"Construir 01 de Central de Imunização até 2025.","esperado":"0","resultado":"NA","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"NA"}},
                     {"id":92,"title":"Construir 01 Centro de Zoonoses até 2025.","esperado":"60%","resultado":"NA","resultado_2022":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"NA"}},
@@ -597,7 +609,7 @@ const dataSets = {
             "Diretriz 5: Ampliação dos Investimentos em Saúde.":{
                 "Objetivo 5.1: Construir, ampliar e equipar as unidades de saúde.":[
                     {"id":88,"title":"Ampliar a estrutura física de 07 unidades básicas de saúde até 2025.","esperado":"2","resultado":"0","resultado_2023":"1","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
-                    {"id":89,"title":"Construir 06 unidades básicas de saúde até 2025.","esperado":"2","resultado":"1","resultado_2023":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"1","3":"1"}},
+                    {"id":89,"title":"Construir 06 unidades básicas de saúde até 2025.","esperado":"2","resultado":"1","resultado_2023":"0","polaridade":"maior","quadrimestres":{"1":"0","2":"1","1":"1"}},
                     {"id":90,"title":"Equipar as unidades de saúde que foram ampliadas e construidas, em 100% até 2025.","esperado":"100%","resultado":"0%","resultado_2023":"0%","polaridade":"maior","quadrimestres":{"1":"0%","2":"0%","3":"0%"}},
                     {"id":91,"title":"Construir 01 de Central de Imunização até 2025.","esperado":"0","resultado":"0","resultado_2023":"NA","polaridade":"maior","quadrimestres":{"1":"0","2":"0","3":"0"}},
                     {"id":92,"title":"Construir 01 Centro de Zoonoses até 2025.","esperado":"0","resultado":"0","resultado_2023":"NA","polaridade":"maior","quadrimestres":{"1":"60%","2":"0","3":"0"}},
@@ -610,7 +622,106 @@ const dataSets = {
         }
       }
     };
-
+    
+const calculationMethods = {
+    1: `(Estimativa populacional ACS∗575) 100 * nº ACS: Número de Agentes Comunitários de Saúde (CBO: 515105). Lotação: profissionais lotados em equipes da Estratégia Saúde da Família, Equipe de Atenção Básica desde que vinculadas aos estabelecimentos de saúde instituídas em sua respectiva portaria e cadastradas no SCNES. Parâmetro: Considera o valor de 575, resultado da média aritmética entre os valores mínimo e máximo definidos na PNAB 2011. Estimativa populacional: será considerada sempre a estimativa do ano anterior, e atualizada no mês de janeiro, para fins de cálculo do indicador.`,
+    2: `Número de ações de apoio para assistência a população indígena`,
+    3: `Numerador: Número de escolas com assistência oftalmológica pactuadas no Programa Saúde na Escola\nDenominador: Número de escolas pactuadas no Programa Saúde na Escola no mesmo local e período\nFator de multiplicação: 100`,
+    4: `Numerador: Número de famílias beneficiárias do Programa Bolsa Família com perfil saúde acompanhadas pela atenção básica na última vigência do ano\nDenominador: Número total de famílias beneficiárias do Programa Bolsa Família com perfil saúde na última vigência do ano\nFator de multiplicação: 100`,
+    5: `População cadastrada e vincula da às eSFs X 100 / População residente (IBGE)`,
+    6: `População cadastrada e vincula da às eSFs e eAPs X 100 / População residente (IBGE)`,
+    7: `(Média de atend. indiv. x 0,15) + (Média de atend. domic. x 0,25) + (Média de atend. compart. x 0,25) + (Média de atend. grupo x 0,35)\nNúmero de profissionais do NASF a cada 40h\nO peso atribuído a cada indicador é:\nIndicador Peso\nMédia de atendimentos individuais registrado por profissional do NASF 0,15\nMédia de atendimentos individuais domiciliares por profissional de NASF 0,25\nMédia de atendimentos compartilhados por 0,25 81 profissional de NASF\nMédia de atendimentos em grupo por profissional de NASF 0,35\n“Média de atendimento individual realizado por profissional do NASF x 0,15” + “Média de atendimento domiciliar realizado por profissional do NASF x 0,25” + “Média de atendimento compartilhado realizado pelo NASF x 0,25” + “Média de atendimento em grupo realizado pelo NASF x 0,35”.\nDenominador: O número de profissionais do NASF será estabelecido através da soma da carga horária ambulatorial destes profissionais encontrada no CNES dividido por 40. Fonte: Sistema Nacional de Cadastro de Estabelecimento de Saúde (SCNES).`,
+    8: `Número de coletas realizadas x 100\nNúmero de consultas realizadas`,
+    9: `Quantidade de Crianças integrantes do Programa APLV X 100\nQuantidade de Crianças integrantes do Programa APLV em 2020`,
+    10: `Número de nascidos vivos de mães adolescentes de 10 a 19 anos residentes em determinado local e período X 100\nNúmero de nascidos vivos de mães residentes no mesmo local e período\nNumerador: Número de nascidos vivos de mães adolescentes de 10 a 19 anos residentes em determinado local e período\nDenominador: Número de nascidos vivos de mães residentes no mesmo local e período.\nFator de multiplicação: 100`,
+    11: `(𝑁º 𝑑𝑒 3ª 𝑑𝑜𝑠𝑒𝑠 𝑎𝑝𝑙𝑖𝑐𝑎𝑑𝑎𝑠 𝑑𝑒 𝑃𝑜𝑙𝑖𝑜 𝑒 𝑃𝑒𝑛𝑡𝑎 𝑒𝑚 𝑚𝑒𝑛𝑜𝑟𝑒𝑠 𝑑𝑒 1 𝑎𝑛𝑜 / ( 𝑃𝑎𝑟𝑎𝑚ê𝑡𝑟𝑜 𝑑𝑒 𝐶𝑎𝑑𝑎𝑠𝑡𝑟𝑜 𝑃𝑜𝑝𝑢𝑙𝑎çã𝑜 𝐼𝐵𝐺𝐸 × 𝑆𝐼𝑁𝐴𝑆𝐶 𝒐𝒖 𝑁º 𝑐𝑟𝑖𝑎𝑛ç𝑎𝑠 𝑐𝑎𝑑𝑎𝑠𝑡𝑟𝑎𝑑𝑎𝑠))¹\n¹ O denominador será o que apresentar o maior valor\nNumerador: Considera-se o menor número de doses aplicadas entre a 3ª doses de pólio ou 3ª dose de pentavalente em menores de 1 ano\nDenominador: Será considerado a mensuração que obtiver o maior resultado: 1- O menor resultado de quadrimestre da quantidade de nascidos vivos do município no período de 2014 a 2017 (apresentado no TABNET), com a correção da proporção do parâmetro de cadastro (apresentado no Painel de cadastro, número obtido com base na tipologia do município, levando em consideração a população IBGE) em relação à população IBGE do município, ou 2- Quantidade de crianças menores de 1 ano cadastradas, identificadas e vinculadas corretamente no município no período.`,
+    12: `(𝑁º 𝑑𝑖𝑎𝑏é𝑡𝑖𝑐𝑜𝑠 𝑐𝑜𝑚 𝑠𝑜𝑙𝑖𝑐𝑖𝑡𝑎çã𝑜 𝑑𝑒 𝐻𝑏𝐴1𝑐 𝑛𝑜𝑠 ú𝑙𝑡𝑖𝑚𝑜𝑠 12 𝑚𝑒𝑠𝑒𝑠 / (𝑃𝑎𝑟𝑎𝑚ê𝑡𝑟𝑜 𝑑𝑒 𝐶𝑎𝑑𝑎𝑠𝑡𝑟𝑜 × % 𝑑𝑖𝑎𝑏é𝑡𝑖𝑐𝑜𝑠 𝑃𝑁𝑆 𝒐𝒖 𝑁º 𝑑𝑖𝑎𝑏é𝑡𝑖𝑐𝑜𝑠 𝑖𝑑𝑒𝑛𝑡𝑖𝑓𝑖𝑐𝑎𝑑𝑜𝑠))¹\nNumerador: Número de cadastrados identificados e vinculados corretamente nesta equipe com atendimento onde o problema condição avaliada foi a diabetes com a solicitação de Hemoglobina Glicada no intervalo de 12 meses (podendo ser marcação de campo rápido ou seleção do CID/SIGTAP correspondente).\nDenominador: Será considerado a mensuração que obtiver o maior resultado: 1- A porcentagem de diabéticos diagnosticados do estado na PNS de 2013 (apresentado no TABNET) vezes o parâmetro de cadastro (apresentado no Painel de cadastro, número obtido com base na tipologia do município, levando em consideração a população IBGE), ou 2- Quantidade de diabéticos cadastrados, identificados e vinculados corretamente na equipe no período.`,
+    13: `(𝑁º𝑔𝑒𝑠𝑡𝑎𝑛𝑡𝑒𝑠 𝑐𝑜𝑚 6 𝑐𝑜𝑛𝑠𝑢𝑙𝑡𝑎𝑠 𝑝𝑟é − 𝑛𝑎𝑡𝑎𝑙, 𝑐𝑜𝑚 1ª 𝑎𝑡é 20 𝑠𝑒𝑚𝑎𝑛𝑎𝑠 𝑑𝑒 𝑔𝑒𝑠𝑡𝑎ção / (𝑃𝑎𝑟𝑎𝑚ê𝑡𝑟𝑜 𝑑𝑒 𝐶𝑎𝑑𝑎𝑠𝑡𝑟𝑜 𝑃𝑜𝑝𝑢𝑙𝑎çã𝑜 𝐼𝐵𝐺𝐸 × 𝑆𝐼𝑁𝐴𝑆𝐶 𝒐𝒖 𝑁º 𝑔𝑒𝑠𝑡𝑎𝑛𝑡𝑒𝑠 𝑖𝑑𝑒𝑛𝑡𝑖𝑓𝑖𝑐𝑎𝑑𝑎𝑠))¹\n¹ O denominador será o que apresentar o maior valor\nNumerador: Número de mulheres com gestações finalizadas no período, cadastradas, identificadas e vinculadas corretamente nesta equipe com pelo menos 6 atendimentos onde o problema condição avaliada foi o pré-natal (podendo ser marcação de campo rápido ou seleção do CID/CIAP correspondente),sendo que a primeira consulta realizada possui uma diferença de no máximo 20 semanas da data da DUM registrada no atendimento.\nDenominador: Será considerado a mensuração que obtiver o maior resultado: 1- O menorresultado de quadrimestre da quantidade de nascidos vivos do município no período de 2014 a 2017 (apresentado no TABNET), com a correção da proporção do parâmetro de cadastro (apresentado no Painel de cadastro, número obtido com base na tipologia do município, levando em consideração a população IBGE) em relação à população IBGE do município, ou 2- Quantidade de gestantes cadastradas, identificadas e vinculadas corretamente na equipe com gestações finalizadas (considerando a data provável do parto (DPP) + 14 dias) no período.`,
+    14: `(𝑁º𝑔𝑒𝑠𝑡𝑎𝑛𝑡𝑒𝑠 𝑐𝑜𝑚 𝑠𝑜𝑟𝑜𝑙𝑜𝑔𝑖𝑎 𝑎𝑣𝑎𝑙𝑖𝑎𝑑𝑎 𝑜𝑢 𝑡𝑒𝑠𝑡𝑒 𝑟á𝑝𝑖𝑑𝑜 𝑟𝑒𝑎𝑙𝑖𝑧𝑎𝑑𝑜 𝑝𝑎𝑟𝑎 𝐻𝐼𝑉 𝑒 𝑆𝐼𝐹𝐼𝐿𝐼𝑆 / (𝑃𝑎𝑟𝑎𝑚ê𝑡𝑟𝑜 𝑑𝑒 𝐶𝑎𝑑𝑎𝑠𝑡𝑟𝑜 𝑃𝑜𝑝𝑢𝑙𝑎çã𝑜 𝐼𝐵𝐺𝐸 × 𝑆𝐼𝑁𝐴𝑆𝐶 𝒐𝒖 𝑁º 𝑔𝑒𝑠𝑡𝑎𝑛𝑡𝑒𝑠 𝑖𝑑𝑒𝑛𝑡𝑖𝑓𝑖𝑐𝑎𝑑𝑎𝑠))¹\n¹ O denominador será o que apresentar o maior valor\nNumerador: Número de mulheres com gestações finalizadas no período, cadastradas, identificadas e vinculadas corretamente nesta equipe que tiveram um atendimento individual Exame avaliado com exame avaliado de Sorologia de Sífilis (VDRL), ou realizou o procedimento de teste rápido para Sífilis e avaliou o exame de Sorologia de HIV ou realizou o procedimento de teste rápido para HIV (é aceito a marcação do campo rápido ou o SIGTAP correspondente em ambos os casos)\nDenominador: Será considerado a mensuração que obtiver o maior resultado: 1- O menor resultado de quadrimestre da quantidade de nascidos vivos do município no período de 2014 a 2017 (apresentado no TABNET), com a correção da proporção do parâmetro de cadastro (apresentado no Painel de cadastro, número obtido com base na tipologia do município, levando em consideração a população IBGE) em relação à população IBGE do município, ou 2- Quantidade de gestantes cadastradas, identificadas e vinculadas corretamente na equipe com gestações finalizadas (considerando a data provável)`,
+    15: `(𝑁º ℎ𝑖𝑝𝑒𝑟𝑡𝑒𝑛𝑠𝑜𝑠 𝑐𝑜𝑚 𝑝𝑟𝑒𝑠𝑠ã𝑜 𝑎𝑟𝑡𝑒𝑟𝑖𝑎𝑙 𝑎𝑓𝑒𝑟𝑖𝑑𝑎 𝑝𝑒𝑙𝑜 𝑚𝑒𝑛𝑜𝑠 1 𝑣𝑒𝑧 𝑝𝑜𝑟 𝑠𝑒𝑚𝑒𝑠𝑡𝑟𝑒 / (𝑃𝑎𝑟𝑎𝑚ê𝑡𝑟𝑜 𝑑𝑒 𝐶𝑎𝑑𝑎𝑠𝑡𝑟𝑜 × % ℎ𝑖𝑝𝑒𝑟𝑡𝑒𝑛𝑠𝑜𝑠 𝑃𝑁𝑆 𝑜𝑢 𝑁º ℎ𝑖𝑝𝑒𝑟𝑡𝑒𝑛𝑠𝑜𝑠 𝑖𝑑𝑒𝑛𝑡𝑖𝑓𝑖𝑐𝑎𝑑𝑜𝑠))¹\n¹ O denominador será o que apresentar o maior valor\nNumerador: Número de cadastrados identificados e vinculados corretamente nesta equipe com atendimento onde o problema condição avaliada foi a hipertensão e a pressão arterial foi aferida pelo menos uma vez no semestre (podendo ser marcação de campo rápido ou seleção do CID/SIGTAP correspondente).\nDenominador: Será considerado a mensuração que obtiver o maior resultado: 1- A porcentagem de hipertensos diagnosticados do estado na PNS de 2013 (apresentado no TABNET) vezes o parâmetro de cadastro (apresentado no Painel de cadastro, número obtido com base na tipologia do município, levando em consideração a população IBGE), ou 2- Quantidade de hipertensos cadastrados, identificados e vinculados corretamente na equipe no período.`,
+    16: `(𝑁º𝑔𝑒𝑠𝑡𝑎𝑛𝑡𝑒𝑠 𝑐𝑜𝑚 𝑎𝑡𝑒𝑛𝑑𝑖𝑚𝑒𝑛𝑡𝑜 𝑜𝑑𝑜𝑛𝑡𝑜𝑙ó𝑔𝑖𝑐𝑜 / (𝑃𝑎𝑟𝑎𝑚ê𝑡𝑟𝑜 𝑑𝑒 𝐶𝑎𝑑𝑎𝑠𝑡𝑟𝑜 𝑃𝑜𝑝𝑢𝑙𝑎çã𝑜 𝐼𝐵𝐺𝐸 × 𝑆𝐼𝑁𝐴𝑆𝐶 𝒐𝒖 𝑁º 𝑔𝑒𝑠𝑡𝑎𝑛𝑡𝑒𝑠 𝑖𝑑𝑒𝑛𝑡𝑖𝑓𝑖𝑐𝑎𝑑𝑎𝑠))¹\n¹ O denominador será o que apresentar o maior valor\nNumerador: Número de mulheres com gestações finalizadas no período, cadastradas, identificadas e vinculadas corretamente nesta equipe com pelo menos 1 atendimento onde o problema condição avaliada no atendimento foi o pré-natal odontológico (podendo ser marcação de campo rápido ou seleção do CID/CIAP correspondente).\nDenominador: Será considerado a mensuração que obtiver o maior resultado: 1- O menor resultado de quadrimestre da quantidade de nascidos vivos do município no período de 2014 a 2017 (apresentado no TABNET), com a correção da proporção do parâmetro de cadastro (apresentado no Painel de cadastro, número obtido com base na tipologia do município, levando em consideração a população IBGE) em relação à população IBGE do município, ou 2- Quantidade de gestantes cadastradas, identificadas e vinculadas corretamente na equipe com gestações finalizadas (considerando a data provável do parto (DPP) + 14 dias) no período.`,
+    17: `Acesso à atenção odontológica na Atenção Básica: Número de pessoas que tiveram um atendimento odontológico na atenção básica de forma individual, em grupo ou procedimento odontológico coletivo, em relação ao número total de usuários da atenção básica que realizaram pelo menos 1 atendimento médico ou de enfermagem individual no período.\nNumerador: Número de atendimentos odontológicos individuais, em grupo ou procedimentos odontológicos coletivos registrados por cirurgião dentista (CBO: 223208) em unidades de saúde da atenção básica.\nDenominador: Total de usuários da atenção básica que realizaram pelo menos 1 atendimento médico ou de enfermagem individual no período, com exceção dos atendimentos odontológicos.\nFator de multiplicação: 100`,
+    18: `Número de UBS que implantaram o prontuário eletrônico X 100 / Número total de UBS`,
+    19: `Número de Unidades Básicas de Saúde de Zona Urbana com cuidado farmacêutico X 100 / Número de Unidades Básicas de Saúde de Zona Urbana`,
+    20: `Número de Farmácia Viva implantada no município`,
+    21: `Número de Unidades Básicas de Saúde com fitoterapia X 100 / Número total de Unidades Básicas de Saúde`,
+    22: `Número de ações promovidas para o uso racional de medicamentos`,
+    23: `(𝑁º 𝑑𝑒 ó𝑏𝑖𝑡𝑜𝑠 𝑑𝑒 𝑐𝑟𝑖𝑎𝑛ç𝑎𝑠 𝑚𝑒𝑛𝑜𝑟𝑒𝑠 𝑑𝑒 1 𝑎𝑛𝑜 𝑑𝑒 𝑖𝑑𝑎𝑑𝑒 𝑟𝑒𝑠𝑖𝑑𝑒𝑛𝑡𝑒𝑠 / 𝑁º 𝑑𝑒 𝑁𝑎𝑠𝑐𝑖𝑑𝑜𝑠 𝑉𝑖𝑣𝑜𝑠 𝑟𝑒𝑠𝑖𝑑𝑒𝑛𝑡𝑒𝑠) ∗ 1000\nNumerador: Número de óbitos de crianças menores de 1 ano de idade residentes em determinado local e período.\nDenominador: Número de nascidos vivos residentes no mesmo local e período.\nFator de multiplicação: 1000`,
+    24: `(𝑁º 𝑑𝑒 ó𝑏𝑖𝑡𝑜𝑠 𝑚𝑎𝑡𝑒𝑟𝑛𝑜𝑠 𝑟𝑒𝑠𝑖𝑑𝑒𝑛𝑡𝑒𝑠 / 𝑁º 𝑑𝑒 𝑁𝑎𝑠𝑐𝑖𝑑𝑜𝑠 𝑉𝑖𝑣𝑜𝑠 𝑟𝑒𝑠𝑖𝑑𝑒𝑛𝑡𝑒𝑠) ∗ 100000\nNumerador: Óbitos maternos (CID-10, A34; O00-08; O10-16; O20-23; O24.4; O25-26; O28-29; O30-48; O60-75; O85-92; O95-99).\nDenominador: Nascidos vivos (SINASC), corrigido pela proporção do parâmetro de cadastro, ou seja, população IBGE x a porcentagem da população cadastrada, no intuito de incentivar o registro correto de todos os usuários da APS mesmo que possa afetar o resultado do indicador.\nFator de multiplicação: 100000`,
+    25: `Número de nascidos vivos de parto normal X 100 / Número total de nascidos vivos no SUS`,
+    26: `Número de casos de sífilis congênita notificados em menores de 1 ano de idade residentes X 1000 / Número de nascidos vivos`,
+    27: `(𝑁º 𝑑𝑒 𝑁𝑎𝑠𝑐𝑖𝑑𝑜𝑠 𝑉𝑖𝑣𝑜𝑠 𝑟𝑒𝑠𝑖𝑑𝑒𝑛𝑡𝑒𝑠 / 𝑃𝑜𝑝𝑢𝑙𝑎çã𝑜 𝑇𝑜𝑡𝑎𝑙) ∗ 1000\nNumerador: Número de nascidos vivos de residentes em determinado local e período.\nDenominador: População total residente no mesmo local e período.\nFator de multiplicação: 1000`,
+    28: `(𝑁º 𝑑𝑒 𝐼𝑛𝑡𝑒𝑟𝑛𝑎çõ𝑒𝑠 𝑝𝑜𝑟 𝐶𝑜𝑛𝑑𝑖çõ𝑒𝑠 𝑆𝑒𝑛𝑠í𝑣𝑒𝑖𝑠 à 𝐴𝑡𝑒𝑛çã𝑜 𝑃𝑟𝑖𝑚á𝑟𝑖𝑎 / 𝑃𝑜𝑝𝑢𝑙𝑎çã𝑜 𝑇𝑜𝑡𝑎𝑙) ∗ 10000\nNumerador: Número de internações por Condições Sensíveis à Atenção Primária (CSAP) em determinado local e período.\nDenominador: População total residente no mesmo local e período.\nFator de multiplicação: 10000`,
+    29: `(𝑁º 𝑑𝑒 𝑚𝑢𝑙ℎ𝑒𝑟𝑒𝑠 𝑑𝑒 25 𝑎 64 𝑎𝑛𝑜𝑠 𝑐𝑜𝑚 𝑝𝑒𝑙𝑜 𝑚𝑒𝑛𝑜𝑠 1 𝑒𝑥𝑎𝑚𝑒 𝑐𝑖𝑡𝑜𝑝𝑎𝑡𝑜𝑙ó𝑔𝑖𝑐𝑜 𝑟𝑒𝑎𝑙𝑖𝑧𝑎𝑑𝑜 𝑛𝑜𝑠 ú𝑙𝑡𝑖𝑚𝑜𝑠 36 𝑚𝑒𝑠𝑒𝑠 / 𝑁º 𝑑𝑒 𝑚𝑢𝑙ℎ𝑒𝑟𝑒𝑠 𝑑𝑒 25 𝑎 64 𝑎𝑛𝑜𝑠 𝑐𝑎𝑑𝑎𝑠𝑡𝑟𝑎𝑑𝑎𝑠 𝑖𝑑𝑒𝑛𝑡𝑖𝑓𝑖𝑐𝑎𝑑𝑎𝑠 𝑒 𝑣𝑖𝑛𝑐𝑢𝑙𝑎𝑑𝑎𝑠)¹\n¹ O denominador será o que apresentar o maior valor\nNumerador: Número de mulheres de 25 a 64 anos cadastradas, identificadas e vinculadas corretamente nesta equipe que realizaram um atendimento onde o problema condição avaliada foi a saúde da mulher e o exame citopatológico (podendo ser marcação de campo rápido ou seleção do CID/SIGTAP correspondente) foi realizado nos últimos 36 meses.\nDenominador: Será considerado a mensuração que obtiver o maior resultado: 1- A porcentagem de mulheres do estado na PNS de 2013 (apresentado no TABNET) vezes o parâmetro de cadastro (apresentado no Painel de cadastro, número obtido com base na tipologia do município, levando em consideração a população IBGE) em relação à população IBGE do município, ou 2- Quantidade de mulheres de 25 a 64 anos cadastradas, identificadas e vinculadas corretamente na equipe no período.`,
+    30: `(𝑁º 𝑑𝑒 𝑚𝑎𝑚𝑜𝑔𝑟𝑎𝑓𝑖𝑎𝑠 𝑑𝑒 𝑟𝑎𝑠𝑡𝑟𝑒𝑎𝑚𝑒𝑛𝑡𝑜 𝑒𝑚 𝑚𝑢𝑙ℎ𝑒𝑟𝑒𝑠 𝑑𝑒 50 𝑎 69 𝑎𝑛𝑜𝑠 𝑟𝑒𝑎𝑙𝑖𝑧𝑎𝑑𝑎𝑠 𝑛𝑜𝑠 ú𝑙𝑡𝑖𝑚𝑜𝑠 24 𝑚𝑒𝑠𝑒𝑠 / 𝑁º 𝑑𝑒 𝑚𝑢𝑙ℎ𝑒𝑟𝑒𝑠 𝑑𝑒 50 𝑎 69 𝑎𝑛𝑜𝑠 𝑐𝑎𝑑𝑎𝑠𝑡𝑟𝑎𝑑𝑎𝑠 𝑖𝑑𝑒𝑛𝑡𝑖𝑓𝑖𝑐𝑎𝑑𝑎𝑠 𝑒 𝑣𝑖𝑛𝑐𝑢𝑙𝑎𝑑𝑎𝑠)¹\n¹ O denominador será o que apresentar o maior valor\nNumerador: Número de mulheres de 50 a 69 anos cadastradas, identificadas e vinculadas corretamente nesta equipe que realizaram um atendimento onde o problema condição avaliada foi a saúde da mulher e a mamografia de rastreamento (podendo ser marcação de campo rápido ou seleção do CID/SIGTAP correspondente) foi realizada nos últimos 24 meses.\nDenominador: Será considerado a mensuração que obtiver o maior resultado: 1- A porcentagem de mulheres do estado na PNS de 2013 (apresentado no TABNET) vezes o parâmetro de cadastro (apresentado no Painel de cadastro, número obtido com base na tipologia do município, levando em consideração a população IBGE) em relação à população IBGE do município, ou 2- Quantidade de mulheres de 50 a 69 anos cadastradas, identificadas e vinculadas corretamente na equipe no período.`,
+    31: `(𝑁º 𝑑𝑒 ó𝑏𝑖𝑡𝑜𝑠 𝑝𝑜𝑟 𝐷𝐶𝑁𝑇 𝑒𝑚 𝑖𝑛𝑑𝑖𝑣í𝑑𝑢𝑜𝑠 𝑑𝑒 30 𝑎 69 𝑎𝑛𝑜𝑠 𝑟𝑒𝑠𝑖𝑑𝑒𝑛𝑡𝑒𝑠 / 𝑃𝑜𝑝𝑢𝑙𝑎çã𝑜 𝑑𝑒 30 𝑎 69 𝑎𝑛𝑜𝑠) ∗ 100000\nNumerador: Número de óbitos por Doenças Crônicas Não Transmissíveis (DCNT) em indivíduos de 30 a 69 anos residentes em determinado local e período.\nDenominador: População total de 30 a 69 anos residente no mesmo local e período.\nFator de multiplicação: 100000`,
+    32: `Nº de pessoas idosas que participam de atividades coletivas/grupais X 100 / Nº de pessoas idosas cadastradas na Atenção Primária`,
+    33: `Nº de equipes de eSF e eAP capacitadas em envelhecimento e saúde da pessoa idosa X 100 / Nº de equipes de eSF e eAP existentes na Atenção Primária`,
+    34: `Número de internações de pessoas idosas por causas sensíveis à atenção primária X 1000 / População idosa residente`,
+    35: `Nº de pessoas idosas com avaliação multidimensional realizada X 100 / Nº de idosos cadastrados na Atenção Primária`,
+    36: `Nº de recém-nascidos com teste de triagem auditiva neonatal X 100 / Nº total de nascidos vivos`,
+    37: `Número de linhas de cuidado implantadas para atenção às pessoas com Transtorno do Espectro Autista (TEA) e suas famílias`,
+    38: `Nº de atendimentos especializados a pessoa com deficiência X 100 / Nº total de pessoas com deficiência cadastradas`,
+    39: `Nº de recém-nascidos com Apgar menor de 7 no 5º minuto X 100 / Nº total de nascidos vivos na Maternidade Municipal`,
+    40: `Número de linhas de cuidado implantadas para atenção às pessoas com Transtorno do Espectro Autista (TEA) e suas famílias`,
+    41: `Número de ações de matriciamento realizadas pelo CAPS com equipes de APS`,
+    42: `Número de casos notificados de tentativa de suicídio`,
+    43: `Número de reinternações de residentes por transtorno mental ocorridas em até 12 meses, após a 1ª internação X 100 / Número total de internações por transtorno mental`,
+    44: `Tempo médio de espera para atendimento médico de pacientes classificados na triagem como laranja`,
+    45: `Número de óbitos nas internações por AVC X 100 / Número total de internações por AVC`,
+    46: `Número de óbitos nas internações por IAM X 100 / Número total de internações por IAM`,
+    47: `Número de pessoas assistidas em hospitais quando acidentadas X 100 / Número total de acidentados`,
+    48: `Tempo resposta (minutos)`,
+    49: `Taxa de mortalidade por causas externas na população masculina entre 20 a 59 anos`,
+    50: `Número de consultas médicas na APS/SUS pela população masculina na faixa etária entre 20 a 59 anos`,
+    51: `Número de procedimentos ambulatoriais de média complexidade X 100 / População residente`,
+    52: `Número de procedimentos de reabilitação executados`,
+    53: `Percentual de unidades da assistência e unidades administrativas do hospital`,
+    54: `Percentual de protocolos implantados nas unidades assistenciais do Hospital Geral de Parauapebas`,
+    55: `Taxa de ocupação de leito hospitalar (%)`,
+    56: `Taxa de mortalidade hospitalar (%)`,
+    57: `Taxa de infecção geral (%)`,
+    58: `Tempo médio de internação hospitalar (dias)`,
+    59: `Percentual de servidores capacitados e treinados com carga horária de 30h por ano`,
+    60: `Número de eventos Sentinela`,
+    61: `Percentual de satisfação`,
+    62: `Número de casos de AIDS em menores de 5 anos`,
+    63: `Proporção de análises realizadas em amostras de água para consumo humano quanto aos parâmetros coliformes totais, cloro residual livre e turbidez`,
+    64: `Percentual de casos novos de tuberculose com exame anti HIV realizado`,
+    65: `Proporção de registro de óbitos com causa básica definida`,
+    66: `Coberturas vacinais (CV) adequadas do Calendário Básico de Vacinação da criança`,
+    67: `Percentual dos contatos examinados dos casos novos de hanseníase`,
+    68: `Percentual de unidades de saúde com ações de promoção da saúde, prevenção e assistência aos pacientes de hepatites virais`,
+    69: `Percentual de doenças compulsórias imediatas registrada no SINAN encerradas em até 60 dias a partir da data de notificação`,
+    70: `Número de grupos de ações de vigilância sanitária realizados`,
+    71: `Número de casos autóctones de malária`,
+    72: `Número de unidades de saúde com serviço de notificação contínua de violência doméstica, sexual e outras violências`,
+    73: `Número absoluto de óbito por dengue`,
+    74: `Percentual de investigação de óbitos maternos`,
+    75: `Percentual de investigações dos óbitos de mulheres em idade fértil (10 a 14 anos MIF)`,
+    76: `Número de ações de vigilância em saúde do trabalhador`,
+    77: `Número de ciclos de visita domiciliar com cobertura de imóveis visitados para controle vetorial da dengue`,
+    78: `Percentual de serviços com gestão de centros de custos na rede de saúde SUS`,
+    79: `Percentual de serviços realizando ações de educação permanente`,
+    80: `Percentual de novos trabalhadores concursados e contratados com capacitação introdutória`,
+    81: `Percentual de profissionais de saúde com ações de qualidade de vida e saúde do trabalhador`,
+    82: `Percentual de serviços de saúde com a implantação dos GTH com plano de trabalho`,
+    83: `Número de projetos de articulação de talentos na SEMSA nas áreas (arte/cultura e produção científica)`,
+    84: `Percentual de habilitações dos serviços ofertados`,
+    85: `Percentual de imóveis registrados`,
+    86: `Percentual de imóveis com licença operacional ambiental`,
+    87: `Percentual de habite-se dos prédios públicos`,
+    88: `Número de unidades básicas de saúde com estrutura física ampliada`,
+    89: `Número de unidades básicas de saúde construídas`,
+    90: `Percentual de unidades de saúde equipadas que forem ampliadas e construídas`,
+    91: `Número de Central de Imunização construída`,
+    92: `Número de Centro de Zoonoses construído`,
+    93: `Número de Centros de Atenção Psicossocial (CAPS) construídos`,
+    94: `Número de bases descentralizadas do SAMU construídas`,
+    95: `Número de Centro Especializado em Reabilitação CER tipo IV com Oficina ortopédica construído`,
+    96: `Número de ampliações realizadas`,
+    97: `Número absoluto`
+};
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
@@ -654,6 +765,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 polaridade: goalData.polaridade,
                                 diretriz: diretriz,
                                 objetivo: objetivo,
+                                calculationMethod: calculationMethods[goalData.id] || "Método de cálculo não fornecido.",
                                 yearly_data: {} 
                             };
                         }
@@ -924,6 +1036,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="year-result-grid">
                             ${historyHtml}
                         </div>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-gray-200">
+                        <details>
+                            <summary class="text-xs font-bold text-gray-500 uppercase cursor-pointer hover:text-gray-700 select-none">Método de Cálculo</summary>
+                            <p class="text-xs text-gray-600 mt-2 p-2 bg-gray-50 rounded whitespace-pre-wrap">${goal.calculationMethod}</p>
+                        </details>
                     </div>
                 </div>
             `;
@@ -1372,6 +1490,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             <p class="text-xs text-emerald-600 break-words">${goal.objetivo}</p>
                         </div>
                     </div>
+                    
+                    <div class="mt-4 bg-gray-50 p-4 rounded-lg shadow-sm">
+                        <h5 class="text-sm font-semibold text-gray-700 mb-2">Método de Cálculo</h5>
+                        <p class="text-xs text-gray-600 whitespace-pre-wrap">${goal.calculationMethod}</p>
+                    </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mt-4">
                         <div class="bg-gray-50 p-4 rounded-lg shadow-sm flex flex-col justify-between">
@@ -1475,3 +1598,4 @@ declare var jspdf: any; // Declare jspdf global UMD object
     </script>
 </body>
 </html>
+```
